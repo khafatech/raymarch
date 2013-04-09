@@ -1,5 +1,5 @@
-#ifndef SPHERE_H
-#define SPHERE_H
+#ifndef PLANE_H
+#define PLANE_H
 
 #include <string>
 #include "glm/glm.hpp"
@@ -12,12 +12,12 @@ using std::string;
 
 
 
-class Sphere : public GeomObject {
+class Plane : public GeomObject {
 
 public:
 
-    Sphere() {
-        name = "sphere";
+    Plane() {
+        name = "plane";
     }
 
     void read(istream &in) {
@@ -32,17 +32,17 @@ public:
 
         skip_to(in, ',');
 
-        in >> radius;
+        in >> distance;
 
         GeomObject::read(in);
     }
 
     void print_properties() {
-        cout << "radius: " << radius << endl;
+        cout << "distance: " << distance << endl;
         GeomObject::print_properties();
     }
 
-    float radius;
+    float distance;
 };
 
 #endif

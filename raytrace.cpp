@@ -21,6 +21,8 @@ using namespace std;
 #include "Camera.h"
 #include "LightSource.h"
 #include "Sphere.h"
+#include "Plane.h"
+#include "Box.h"
 
 
 
@@ -61,7 +63,11 @@ void parse_pov(istream &in) {
 
     while (!in.eof()) {
         in >> word;
-        // cout << "read '" << word << "'\n";
+
+        if (in.eof()) {
+            break;
+        }
+        cout << "read '" << word << "'  eof: " << in.eof() << endl;
 
         if (word.size() > 0 && word[0] == '/') {
             // comment
@@ -78,7 +84,9 @@ void parse_pov(istream &in) {
         } else if (word == "light_source") {
             read_obj = new LightSource();
         } else if (word == "box") {
+            read_obj = new Box();
         } else if (word == "plane") {
+            read_obj = new Plane();
         } else if (word == "triangle") {
         } else if (word == "sphere") {
             read_obj = new Sphere();
@@ -130,9 +138,9 @@ int main(int argc, char* argv[]) {
     parse_pov(infile);
     // == end parse
 
+    // print objects
     for (int i=0; i<theObjects.size(); i++) {
-
-        cout << theObjects[i]->name << ":\n";
+        cout << endl << theObjects[i]->name << ":\n";
         theObjects[i]->print_properties();
     }
 

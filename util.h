@@ -18,6 +18,9 @@ void skip_line(istream &in);
 #define print3f(v, name) \
         printf("%s: %f %f %f\n", name, v.x, v.y, v.z);
 
+#define print4f(v, name) \
+        printf("%s: %f %f %f %f\n", name, v.x, v.y, v.z, v.w);
+
 
 #define RAYTRACE_DEBUG
 

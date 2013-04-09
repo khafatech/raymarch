@@ -1,5 +1,5 @@
-#ifndef SPHERE_H
-#define SPHERE_H
+#ifndef BOX_H
+#define BOX_H
 
 #include <string>
 #include "glm/glm.hpp"
@@ -12,37 +12,37 @@ using std::string;
 
 
 
-class Sphere : public GeomObject {
+class Box : public GeomObject {
 
 public:
 
-    Sphere() {
-        name = "sphere";
+    Box() {
+        name = "box";
     }
 
     void read(istream &in) {
 
         char dummy;
         string property("");
-
         skip_to(in, '{');
-        // cout << "read '" << dummy << "'\n";
 
-        read_vec3(in, location);
+        read_vec3(in, corner1);
 
         skip_to(in, ',');
 
-        in >> radius;
+        read_vec3(in, corner2);
 
         GeomObject::read(in);
     }
 
     void print_properties() {
-        cout << "radius: " << radius << endl;
+        print3f(corner1, "corner1");
+        print3f(corner2, "corner2");
         GeomObject::print_properties();
     }
 
-    float radius;
+    vec3 corner1;
+    vec3 corner2;
 };
 
 #endif

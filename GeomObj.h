@@ -50,6 +50,9 @@ struct Pigment {
 
 struct Finish {
     void read(istream &in) {
+        skip_to(in, '{');
+
+        skip_to(in, '}');
     }
 };
 
@@ -59,14 +62,40 @@ class GeomObject : public BaseObject {
 
 public:
     
-    virtual void read(istream &) = 0;
+    virtual void read(istream &in) {
+        string property;
+
+        while (property != "}" && !in.eof()) {
+            in >> property;
+
+            if (property == "pigment") {
+                pigment.read(in);
+            } else if (property == "finish") {
+                finish.read(in);
+            } else if (property == "translate") {
+                read_vec3(in, translate);
+            } else if (property == "rotate") {
+                read_vec3(in, rotate);
+            } else if (property == "scale") {
+                read_vec3(in, scale);
+            }
+        }
+    }
     
-    virtual void print_properties() = 0;
+    virtual void print_properties() {
+        print4f(pigment.color, "pigment");
+        print3f(translate, "translate");
+        print3f(rotate, "rotate");
+        print3f(scale, "scale");
+    }
 
     
     Pigment pigment;
     Finish finish;
+
     vec3 translate;
+    vec3 rotate;
+    vec3 scale;
 
 };
 
