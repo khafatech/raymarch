@@ -13,7 +13,7 @@ HANDIN_FILES =
 
 all: raytrace
 
-raytrace:	raytrace.o image.o
+raytrace:	raytrace.o image.o util.o
 		$(CC) $(CFLAGS) $^ -o $@ 
 
 
