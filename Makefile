@@ -13,8 +13,9 @@ HANDIN_FILES =
 
 all: raytrace
 
-raytrace:	raytrace.o
+raytrace:	raytrace.o image.o
 		$(CC) $(CFLAGS) $^ -o $@ 
+
 
 
 %.o: %.c $(wildcard %.h)
