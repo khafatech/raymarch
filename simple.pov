@@ -21,6 +21,11 @@ plane {<0, 1, 0>, -4
       finish {ambient 0.4 diffuse 0.8}
 }
 
+triangle {<8, 0, 1>, <6, 3, 0>, <1, 2, 3>
+      pigment {color rgb <0.6, 0.0, 0.1>}
+      finish {ambient 0.4 diffuse 0.2}
+}
+
 
 box {<8, 0, 1>, <42, 3, 0>
       pigment {color rgb <0.2, 0.2, 0.8>}

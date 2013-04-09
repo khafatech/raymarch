@@ -23,6 +23,7 @@ using namespace std;
 #include "Sphere.h"
 #include "Plane.h"
 #include "Box.h"
+#include "Triangle.h"
 
 
 
@@ -88,6 +89,7 @@ void parse_pov(istream &in) {
         } else if (word == "plane") {
             read_obj = new Plane();
         } else if (word == "triangle") {
+            read_obj = new Triangle();
         } else if (word == "sphere") {
             read_obj = new Sphere();
         } else if (word == "cone") {
