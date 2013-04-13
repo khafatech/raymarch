@@ -142,7 +142,7 @@ int main(int argc, char* argv[]) {
 
     // print objects
     for (int i=0; i<theObjects.size(); i++) {
-        cout << endl << theObjects[i]->name << ":\n";
+        cout << endl << endl << theObjects[i]->name << ":\n";
         theObjects[i]->print_properties();
     }
 

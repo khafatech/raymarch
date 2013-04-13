@@ -49,11 +49,48 @@ struct Pigment {
 
 
 struct Finish {
+    Finish() {
+        ambient = diffuse = specular = roughness = reflection = refraction = ior = 0;
+    }
+
     void read(istream &in) {
         skip_to(in, '{');
 
-        skip_to(in, '}');
+        string property;
+
+        while (property != "}" && !in.eof()) {
+            in >> property;
+
+            if (property == "ambient") {
+                in >> ambient;
+            } else if (property == "diffuse") {
+                in >> diffuse;
+            } else if (property == "specular") {
+                in >> specular;
+            } else if (property == "roughness") {
+                in >> roughness;
+            } else if (property == "reflection") {
+                in >> reflection;
+            } else if (property == "refraction") {
+                in >> refraction;
+            } else if (property == "ior") {
+                in >> ior;
+            }
+        }
     }
+
+    void print_properties() {
+        cout << "finish:" << endl;
+        cout << "ambient " << ambient << endl;
+        cout << "diffuse " << diffuse<< endl;
+        cout << "specular " << specular<< endl;
+        cout << "roughness " << roughness<< endl;
+        cout << "reflection " << reflection<< endl;
+        cout << "refraction " << refraction<< endl;
+        cout << "ior " << ior;
+    }
+
+    float ambient, diffuse, specular, roughness, reflection, refraction, ior;
 };
 
 
@@ -83,10 +120,11 @@ public:
     }
     
     virtual void print_properties() {
-        print4f(pigment.color, "pigment");
         print3f(translate, "translate");
         print3f(rotate, "rotate");
         print3f(scale, "scale");
+        print4f(pigment.color, "pigment color");
+        finish.print_properties();
     }
 
     
