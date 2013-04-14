@@ -3,12 +3,16 @@
 
 #include <string>
 #include "glm/glm.hpp"
-#include "util.h"
 
+#include "util.h"
 #include "BaseObject.h"
+#include "Ray.h"
 
 using glm::vec3;
+using glm::normalize;
 using std::string;
+
+
 
 
 
@@ -20,6 +24,54 @@ public:
         name = "camera";
     }
 
+
+    // x and y are image coordinates
+    void setImageDimention(int x, int y) {
+        image_w = x;
+        image_h = y;
+    }
+
+    /*
+       equations from Shirley section 10.2
+
+       in the image's coords:
+       u_s = l + (r - l) * (i + 0.5)/n_x
+       v_s = l + (r - l) * (i + 0.5)/n_x
+
+    
+
+    */
+
+    Ray* genRay(int x, int y) {
+
+    }
+
+    Ray* genOrthoRay(int x, int y) {
+        Ray *ray = new Ray();
+
+        // only for ortho
+        ray->d = normalize(look_at - location);
+
+        // TODO - put aspect ratio
+        float r = 1.33333;
+        float top = 1;
+
+        vec3 u;
+        
+        // pixel to cam coords
+        u.x = -r + 2 * r * (x + 0.5) / image_w;
+        u.y = -top + 2 * top * (y + 0.5) / image_h;
+        u.z = -1; // 1 far from camera
+        
+        // cam to world coords
+        ray->p0 = location + vec3(u.x) * normalize(right)
+                  + vec3(u.y) * up
+                  + vec3(u.z) * ray->d;
+
+        return ray;
+    }
+
+    // parse pov
     void read(istream &in) {
 
         char dummy;
@@ -55,6 +107,9 @@ public:
     vec3 up;
     vec3 right;
     vec3 look_at;
+
+    int image_w;
+    int image_h;
 };
 
 #endif

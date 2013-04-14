@@ -22,6 +22,11 @@ void skip_line(istream &in);
         printf("%s: %f %f %f %f\n", name, v.x, v.y, v.z, v.w);
 
 
+#define POWER2(x) ((x) * (x))
+
+#define MAX(x, y) ((x) > (y)) ? (x) : (y);
+
+
 #define RAYTRACE_DEBUG
 
 #ifdef RAYTRACE_DEBUG

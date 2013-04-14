@@ -1,12 +1,15 @@
 #include <fstream>
 #include <iostream>
 #include <string>
-#include <regex>
+// #include <regex>
 
 #include <stdio.h>
 
 using namespace std;
 
+#include "glm/glm.hpp"
+
+#include "util.h"
 
 // textfile.cpp
 //
@@ -52,6 +55,18 @@ int main ()
 {
 
     
+    glm::vec3 v;
+
+    v.x = 2;
+    v.y = 3;
+    v.z = 4;
+
+    // v = glm::scale(v, vec3(5.0));
+    glm::vec3 u = glm::normalize(glm::vec3(5.0) * v);
+
+    print3f(u, "u"); 
+    
+    /*
     ifstream infile;
 
     infile.open("simple.pov", ifstream::in);
@@ -71,6 +86,7 @@ int main ()
         cout << endl;
         s = m.suffix().str();
     }
+    */
 
     return 0;
 }

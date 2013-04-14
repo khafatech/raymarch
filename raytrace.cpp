@@ -24,7 +24,7 @@ using namespace std;
 #include "Plane.h"
 #include "Box.h"
 #include "Triangle.h"
-
+#include "Ray.h"
 
 
 // default values
@@ -37,9 +37,9 @@ Image g_image;
 
 vector<BaseObject*> theObjects;
 
+Camera *g_camera;
 
 
-#define POWER2(x) ((x) * (x))
 void draw_circle(int r) {
     
     for (int y=0; y < g_image_height; y++) {
@@ -81,7 +81,8 @@ void parse_pov(istream &in) {
 
         if (word == "camera") {
             dprint("read camera");
-            read_obj = new Camera();
+            g_camera = new Camera();
+            read_obj = g_camera;
         } else if (word == "light_source") {
             read_obj = new LightSource();
         } else if (word == "box") {
@@ -126,35 +127,50 @@ int main(int argc, char* argv[]) {
     ifstream infile;
     infile.open(fname.c_str(), ifstream::in);
 
-
-    // == test parse
-    /*
-    string dummy;
-    // read "camera"
-    infile >> dummy;
-    Camera cam;
-    cam.read(infile);
-    cam.print_properties();
-    */
-
     parse_pov(infile);
-    // == end parse
 
     // print objects
+    /*
     for (int i=0; i<theObjects.size(); i++) {
         cout << endl << endl << theObjects[i]->name << ":\n";
         theObjects[i]->print_properties();
     }
-
-
+    */
 
     cout << "w: " << g_image_width << " h: " << g_image_height
          << " fname: " << fname << endl;
 
     g_image = init_image(g_image_width, g_image_height);
 
+    g_camera->setImageDimention(g_image_width, g_image_height);
+
+    Ray *ray;
+
+    GeomObject *cur_obj = dynamic_cast<GeomObject *>(theObjects[2]);
+    cout << "casting: " << cur_obj->name << endl;
+
+    float t;
+    for (int y=0; y < g_image_height; y++)
+    for (int x=0; x < g_image_width; x++) {
+        ray = g_camera->genOrthoRay(x, y);
+        t = 0;
+
+        cout << "ray " << x << ", " << y << endl;
+        ray->print();
+        cout << endl;
+        
+        // test only with sphere in simple.pov
+        t = cur_obj->intersect(*ray);
+        if (t > 0) {
+            cout << "intersect!\n";
+            g_image[x][y] = Color(255, 255, 255);
+        }
+
+        delete ray;
+    }
+
     // test
-    draw_circle(g_image_height/3);
+    // draw_circle(g_image_height/3);
 
     // works only with ppm now
     string outfile_name(fname + ".ppm");

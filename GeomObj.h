@@ -7,6 +7,8 @@
 
 #include "util.h"
 
+#include "Ray.h"
+
 using std::string;
 using std::istream;
 using glm::vec3;
@@ -125,6 +127,10 @@ public:
         print3f(scale, "scale");
         print4f(pigment.color, "pigment color");
         finish.print_properties();
+    }
+
+    virtual float intersect(Ray &ray) {
+        return 0;
     }
 
     
