@@ -162,9 +162,9 @@ void cast_rays() {
         // intersect ray with geometry
         for (int i=0; i < g_geom.size(); i++) {
             t = g_geom[i]->intersect(*ray);
-            if (t > 0 && closest_hit.obj == NULL || t < closest_hit.t) {
+            if (t > 0 && (closest_hit.obj == NULL || t < closest_hit.t)) {
                 closest_hit.t = t;
-                closest_hit.obj = g_geom[t];
+                closest_hit.obj = g_geom[i];
             }
         }
 
