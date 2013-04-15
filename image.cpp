@@ -30,6 +30,11 @@ Image init_image(int w, int h) {
             exit(1);
         }
     }
+
+    for (int y=0; y < h; y++)
+    for (int x=0; x < w;x++) {
+        image[x][y] = Color(0, 0, 0);
+    }
     
     return image;
 }

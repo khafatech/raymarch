@@ -53,15 +53,15 @@ public:
         ray->d = normalize(look_at - location);
 
         // TODO - put aspect ratio
-        float r = 1.33333;
-        float top = 1;
+        float r = 5 * 1.33333;
+        float top = 5 * 1;
 
         vec3 u;
         
         // pixel to cam coords
         u.x = -r + 2 * r * (x + 0.5) / image_w;
         u.y = -top + 2 * top * (y + 0.5) / image_h;
-        u.z = -1; // 1 far from camera
+        u.z = 1; // 1 far from camera
         
         // cam to world coords
         ray->p0 = location + vec3(u.x) * normalize(right)

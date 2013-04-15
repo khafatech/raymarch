@@ -29,20 +29,35 @@ public:
 
     float intersect(const Ray &ray) {
 
+        /*
+        cout << "ray:\n";
+        ray.print();
+        cout << endl;
+        */
+
         float t1, t2;
 
         vec3 e_min_c = ray.p0 - location;
         float dd = sqvec(ray.d);
         float sqrt_delta;
 
-        float delta = sqvec(dot(ray.d, e_min_c))
-         - sqvec(ray.d) * (sqvec(e_min_c) - POWER2(radius));
+        float delta = POWER2(dot(ray.d, e_min_c))
+         - dd * (sqvec(e_min_c) - POWER2(radius));
+
 
         if (delta >= 0) {
+            dprint("delta > 0\n");
             
             sqrt_delta = sqrt(delta);
             t1 = (-dot(ray.d, e_min_c) + sqrt_delta) / dd;
             t2 = (-dot(ray.d, e_min_c) - sqrt_delta) / dd;
+
+            /*
+            // debug
+            cout << "t1: " << t1 << endl;
+            cout << "t2: " << t2 << endl;
+            */
+
 
             return MAX(t1, t2);
 

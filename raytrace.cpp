@@ -148,6 +148,7 @@ int main(int argc, char* argv[]) {
 
     GeomObject *cur_obj = dynamic_cast<GeomObject *>(theObjects[2]);
     cout << "casting: " << cur_obj->name << endl;
+    cur_obj->print_properties();
 
     float t;
     for (int y=0; y < g_image_height; y++)
@@ -155,14 +156,11 @@ int main(int argc, char* argv[]) {
         ray = g_camera->genOrthoRay(x, y);
         t = 0;
 
-        cout << "ray " << x << ", " << y << endl;
-        ray->print();
-        cout << endl;
-        
         // test only with sphere in simple.pov
         t = cur_obj->intersect(*ray);
+        // cout << "t: " << t << endl;
+
         if (t > 0) {
-            cout << "intersect!\n";
             g_image[x][y] = Color(255, 255, 255);
         }
 

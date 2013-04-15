@@ -16,6 +16,8 @@ all: raytrace
 raytrace:	raytrace.o image.o util.o
 		$(CC) $(CFLAGS) $^ -o $@ 
 
+test_intersect:	test_intersect.o util.o
+		$(CC) $(CFLAGS) $^ -o $@ 
 
 
 %.o: %.c $(wildcard %.h)

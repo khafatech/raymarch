@@ -27,7 +27,7 @@ void skip_line(istream &in);
 #define MAX(x, y) ((x) > (y)) ? (x) : (y);
 
 
-#define RAYTRACE_DEBUG
+// #define RAYTRACE_DEBUG
 
 #ifdef RAYTRACE_DEBUG
 #define dprint(x) puts(x)

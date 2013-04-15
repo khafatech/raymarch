@@ -20,7 +20,7 @@ public:
         d = vec3(0.0);
     }
 
-    void print() {
+    void print() const {
         print3f(p0, "p0");
         print3f(d, "d");
     }

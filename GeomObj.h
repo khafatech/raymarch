@@ -89,7 +89,7 @@ struct Finish {
         cout << "roughness " << roughness<< endl;
         cout << "reflection " << reflection<< endl;
         cout << "refraction " << refraction<< endl;
-        cout << "ior " << ior;
+        cout << "ior " << ior << endl;
     }
 
     float ambient, diffuse, specular, roughness, reflection, refraction, ior;
@@ -129,7 +129,8 @@ public:
         finish.print_properties();
     }
 
-    virtual float intersect(Ray &ray) {
+    virtual float intersect(const Ray &ray) {
+        cerr << "hurrr\n";
         return 0;
     }
 
