@@ -14,6 +14,8 @@ using std::istream;
 using glm::vec3;
 using glm::vec4;
 
+using namespace std;
+
 
 struct Pigment {
 
@@ -130,7 +132,7 @@ public:
     }
 
     virtual float intersect(const Ray &ray) {
-        cerr << "hurrr\n";
+        // cerr << "hurrr\n";
         return 0;
     }
 

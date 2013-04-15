@@ -36,6 +36,8 @@ Image g_image;
 
 
 vector<BaseObject*> theObjects;
+vector<BaseObject*> g_lights;
+vector<GeomObject*> g_geom;
 
 Camera *g_camera;
 
@@ -56,8 +58,10 @@ void draw_circle(int r) {
 
 
 
-void parse_pov(istream &in) {
+void parse_pov(const string fname) {
 
+    ifstream in;
+    in.open(fname.c_str(), ifstream::in);
 
     string word;
     BaseObject *read_obj;
@@ -85,6 +89,7 @@ void parse_pov(istream &in) {
             read_obj = g_camera;
         } else if (word == "light_source") {
             read_obj = new LightSource();
+            g_lights.push_back(read_obj);
         } else if (word == "box") {
             read_obj = new Box();
         } else if (word == "plane") {
@@ -99,13 +104,82 @@ void parse_pov(istream &in) {
         if (read_obj != NULL) {
             read_obj->read(in);
             theObjects.push_back(read_obj);
+
+            if (dynamic_cast<GeomObject *>(read_obj)) {
+                g_geom.push_back((GeomObject *) read_obj);
+            }
         }
-
-
     }
+
+    in.close();
 
 }
 
+
+// represents an intersection
+struct Hit {
+    Hit(float t, GeomObject *obj) {
+        this->t = t;
+        this->obj = obj;
+    }
+    float t;
+    GeomObject *obj;
+};
+
+
+
+Hit* find_closest_hit(vector<Hit*> &hits) {
+    if (hits.empty()) {
+        return NULL;
+    }
+
+    int smallestIndex = 0;
+    
+    for (int i=0; i < hits.size(); i++) {
+        if (hits[i]->t < hits[smallestIndex]->t) {
+            smallestIndex = i;
+        }
+    }
+    return hits[smallestIndex];
+}
+
+
+void cast_rays() {
+    Ray *ray;
+    GeomObject *cur_obj = dynamic_cast<GeomObject *>(theObjects[2]);
+    cout << "casting: " << cur_obj->name << endl;
+    cur_obj->print_properties();
+
+    // TODO parametrize max distance (doesn't work now)
+    Hit closest_hit(1000, NULL);
+
+    float t;
+    for (int y=0; y < g_image_height; y++)
+    for (int x=0; x < g_image_width; x++) {
+        // ray = g_camera->genOrthoRay(x, y);
+        ray = g_camera->genRay(x, y);
+
+        // intersect ray with geometry
+        for (int i=0; i < g_geom.size(); i++) {
+            t = g_geom[i]->intersect(*ray);
+            if (t > 0 && closest_hit.obj == NULL || t < closest_hit.t) {
+                closest_hit.t = t;
+                closest_hit.obj = g_geom[t];
+            }
+        }
+
+        // t = cur_obj->intersect(*ray);
+        // cout << "t: " << t << endl;
+
+        if (closest_hit.obj) {
+            g_image[x][y] = closest_hit.obj->pigment;
+        }
+
+        closest_hit.obj = NULL;
+
+        delete ray;
+    }
+}
 
 int main(int argc, char* argv[]) {
 
@@ -123,11 +197,7 @@ int main(int argc, char* argv[]) {
     }
 
     string fname(argv[3] + 2);
-
-    ifstream infile;
-    infile.open(fname.c_str(), ifstream::in);
-
-    parse_pov(infile);
+    parse_pov(fname);
 
     // print objects
     /*
@@ -144,28 +214,9 @@ int main(int argc, char* argv[]) {
 
     g_camera->setImageDimention(g_image_width, g_image_height);
 
-    Ray *ray;
 
-    GeomObject *cur_obj = dynamic_cast<GeomObject *>(theObjects[2]);
-    cout << "casting: " << cur_obj->name << endl;
-    cur_obj->print_properties();
-
-    float t;
-    for (int y=0; y < g_image_height; y++)
-    for (int x=0; x < g_image_width; x++) {
-        ray = g_camera->genOrthoRay(x, y);
-        t = 0;
-
-        // test only with sphere in simple.pov
-        t = cur_obj->intersect(*ray);
-        // cout << "t: " << t << endl;
-
-        if (t > 0) {
-            g_image[x][y] = Color(255, 255, 255);
-        }
-
-        delete ray;
-    }
+    // the main thing
+    cast_rays();
 
     // test
     // draw_circle(g_image_height/3);

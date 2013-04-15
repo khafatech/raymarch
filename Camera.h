@@ -42,7 +42,32 @@ public:
 
     */
 
+    // input: image x and y
+    // returns ray in world coords
     Ray* genRay(int x, int y) {
+        Ray *ray = new Ray();
+
+
+        // TODO - put aspect ratio
+        float r =  1.33333;
+        float top = 1;
+
+        vec3 u;
+        vec3 w = normalize(look_at - location);
+        
+        // pixel to cam coords
+        u.x = -r + 2 * r * (x + 0.5) / image_w;
+        u.y = -top + 2 * top * (y + 0.5) / image_h;
+        u.z = 1; // 1 far from camera
+        
+        // cam to world coords
+        ray->p0 = location + vec3(u.x) * normalize(right)
+                  + vec3(u.y) * up
+                  + vec3(u.z) * w;
+
+        ray->d = ray->p0 - location;
+
+        return ray;
 
     }
 

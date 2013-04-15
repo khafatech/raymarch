@@ -7,7 +7,9 @@
 #include <stdio.h>
 #include <stdint.h>
 
-// TODO put in class?
+#include "GeomObj.h"
+
+using namespace std;
 
 struct Color {
 
@@ -19,6 +21,14 @@ struct Color {
     
     Color() {
         r = g = b = 0;
+    }
+
+    Color& operator=(const Pigment &rhs) {
+        r = 255 * rhs.color.x;
+        g = 255 * rhs.color.y;
+        b = 255 * rhs.color.z;
+
+        return *this;
     }
     
     uint8_t r;
