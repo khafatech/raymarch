@@ -37,6 +37,24 @@ public:
         GeomObject::read(in);
     }
 
+    virtual float intersect(const Ray &ray) {
+        /* http://www.siggraph.org/education/materials/HyperGraph/raytrace/rayplane_intersection.htm
+           t = -(N . P0 -D)/ (N . d)
+        */
+
+        float nd = dot(location, ray.d);
+        if (nd == 0) {
+            // parallel
+            return 0;
+        }
+        
+        float npd = -distance - dot(location, ray.p0);
+
+        float t = npd / nd;
+
+        return t;
+    }
+
     void print_properties() {
         cout << "distance: " << distance << endl;
         GeomObject::print_properties();

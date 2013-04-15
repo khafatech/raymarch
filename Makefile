@@ -8,7 +8,7 @@ LDFLAGS =
 
 HANDIN_FILES = 
 
-
+TAR = raytrace.tgz
 
 
 all: raytrace
@@ -25,7 +25,11 @@ test_intersect:	test_intersect.o util.o
 
 
 handin:
-		scp $(HANDIN_FILES) unix3:...
-		ssh unix3 " pn-cs453 $(HANDIN_FILES)"
+		tar -czf $(TAR) ../raytrace
+		scp $(TAR) unix3:~/Desktop
+		ssh unix3 "handin zwood csc473p1 Desktop/$(TAR)"
 
+upload:
+		tar -czf $(TAR) ../raytrace
+		scp $(TAR) unix3:~/Desktop
 
