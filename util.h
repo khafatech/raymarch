@@ -25,6 +25,7 @@ void skip_line(istream &in);
 #define POWER2(x) ((x) * (x))
 
 #define MAX(x, y) ((x) > (y)) ? (x) : (y);
+#define MIN(x, y) ((x) < (y)) ? (x) : (y);
 
 
 // #define RAYTRACE_DEBUG

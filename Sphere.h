@@ -59,7 +59,7 @@ public:
             */
 
 
-            return MAX(t1, t2);
+            return MIN(t1, t2);
 
         } else {
             // no intersection
