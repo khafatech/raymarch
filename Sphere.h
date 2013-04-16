@@ -65,8 +65,10 @@ public:
             // no intersection
             return 0;
         }
+    }
 
-
+    virtual vec3 getNormal(vec3 pos) {
+        return glm::normalize(pos - location);
     }
 
     void read(istream &in) {

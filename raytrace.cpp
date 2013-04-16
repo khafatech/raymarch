@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <cmath>
 
 #include <vector>
 
@@ -144,14 +145,42 @@ Hit* find_closest_hit(vector<Hit*> &hits) {
 }
 
 
+vec3 calcLighting(GeomObject *obj, vec3 N, vec3 pos, LightSource *light) {
+
+    float NL;
+    vec3 L;
+
+    vec3 color;
+
+    light = (LightSource *) g_lights[0];
+
+    L = glm::normalize(light->location - pos);
+    NL = MAX(dot(N, L), 0);
+	// NL = abs(dot(N, L));
+	
+	if (obj->name == "sphere") {
+		// cout << "NL: " << NL << endl;
+	}
+
+    vec3 pigment3 = vec3(obj->pigment.color.x,
+            obj->pigment.color.y, obj->pigment.color.z);
+
+    color = light->color * vec3(NL) * pigment3 + obj->finish.ambient;
+
+    return color;
+}
+
+
 void cast_rays() {
     Ray *ray;
-    GeomObject *cur_obj = dynamic_cast<GeomObject *>(theObjects[2]);
-    cout << "casting: " << cur_obj->name << endl;
-    cur_obj->print_properties();
-
+    
     // TODO parametrize max distance (doesn't work now)
     Hit closest_hit(1000, NULL);
+
+    // for lighting
+    vec3 N;
+    LightSource *light;
+    vec3 pos;
 
     float t;
     for (int y=0; y < g_image_height; y++)
@@ -172,7 +201,22 @@ void cast_rays() {
         // cout << "t: " << t << endl;
 
         if (closest_hit.obj) {
-            g_image[x][y] = closest_hit.obj->pigment;
+            pos = ray->d * vec3(closest_hit.t) + ray->p0;
+            N = closest_hit.obj->getNormal(pos);
+            if (glm::length(N) != 0) {
+                light = (LightSource *) g_lights[0]; // FIXME
+                g_image[x][y] = calcLighting(closest_hit.obj, N, pos, light);
+
+                // debug
+                if (x == 320 && y == 217) {
+                	print3f(pos, "pos");
+                	print3f(N, "N");
+                }
+                
+            } else {
+                g_image[x][y] = closest_hit.obj->pigment;
+            }
+
         }
 
         closest_hit.obj = NULL;

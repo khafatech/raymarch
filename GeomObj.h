@@ -136,6 +136,9 @@ public:
         return 0;
     }
 
+    virtual vec3 getNormal(vec3 pos) {
+        return vec3(0.0);
+    }
     
     Pigment pigment;
     Finish finish;

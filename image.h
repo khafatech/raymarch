@@ -23,6 +23,14 @@ struct Color {
         r = g = b = 0;
     }
 
+    Color& operator=(const vec3 &rhs) {
+        r = MIN(255 * rhs.x, 255);
+        g = MIN(255 * rhs.y, 255);
+        b = MIN(255 * rhs.z, 255);
+
+        return *this;
+    }
+
     Color& operator=(const Pigment &rhs) {
         r = 255 * rhs.color.x;
         g = 255 * rhs.color.y;

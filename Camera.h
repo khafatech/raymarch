@@ -57,7 +57,7 @@ public:
         
         // pixel to cam coords
         u.x = -r + 2 * r * (x + 0.5) / image_w;
-        u.y = -top + 2 * top * (y + 0.5) / image_h;
+        u.y = top - 2 * top * (y + 0.5) / image_h;
         u.z = 1; // 1 far from camera
         
         // cam to world coords

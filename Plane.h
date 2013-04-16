@@ -48,11 +48,15 @@ public:
             return 0;
         }
         
-        float npd = -distance - dot(location, ray.p0);
+        float npd = distance - dot(location, ray.p0);
 
         float t = npd / nd;
 
         return t;
+    }
+
+    vec3 getNormal(vec3 pos) {
+        return location;
     }
 
     void print_properties() {
