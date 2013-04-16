@@ -145,14 +145,40 @@ Hit* find_closest_hit(vector<Hit*> &hits) {
 }
 
 
+
+
+bool blocked_light(vec3 pos, LightSource *light) {
+
+    // TODO test with global obj (then there'll be no stack alloc/dealloc
+	Ray ray;
+	
+	ray.d = light->location - pos;
+	ray.p0 = pos;
+	
+	for (int i=0; i < g_geom.size(); i++) {
+        if (g_geom[i]->intersect(ray) > 0.001) {
+            return true;
+        }
+	}
+	return false;
+}
+
+
 vec3 calcLighting(GeomObject *obj, vec3 N, vec3 pos, LightSource *light) {
+
 
     float NL;
     vec3 L;
 
     vec3 color;
-
-    light = (LightSource *) g_lights[0];
+    
+    vec3 pigment3 = vec3(obj->pigment.color.x,
+            obj->pigment.color.y, obj->pigment.color.z);
+    
+    if (blocked_light(pos, light)) {
+        // shadow
+        return vec3(0) + obj->finish.ambient; // this is temporary FIXME
+    }
 
     L = glm::normalize(light->location - pos);
     NL = MAX(dot(N, L), 0);
@@ -161,9 +187,6 @@ vec3 calcLighting(GeomObject *obj, vec3 N, vec3 pos, LightSource *light) {
 	if (obj->name == "sphere") {
 		// cout << "NL: " << NL << endl;
 	}
-
-    vec3 pigment3 = vec3(obj->pigment.color.x,
-            obj->pigment.color.y, obj->pigment.color.z);
 
     color = light->color * vec3(NL) * pigment3 + obj->finish.ambient;
 
@@ -205,6 +228,8 @@ void cast_rays() {
             N = closest_hit.obj->getNormal(pos);
             if (glm::length(N) != 0) {
                 light = (LightSource *) g_lights[0]; // FIXME
+                
+                
                 g_image[x][y] = calcLighting(closest_hit.obj, N, pos, light);
 
                 // debug
