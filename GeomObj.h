@@ -121,6 +121,8 @@ public:
                 read_vec3(in, scale);
             }
         }
+
+        location += translate;
     }
     
     virtual void print_properties() {

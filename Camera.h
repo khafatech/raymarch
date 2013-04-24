@@ -10,6 +10,7 @@
 
 using glm::vec3;
 using glm::normalize;
+using glm::length;
 using std::string;
 
 
@@ -49,8 +50,8 @@ public:
 
 
         // TODO - put aspect ratio
-        float r =  1.33333;
-        float top = 1;
+        float r = length(right) / 2.0;
+        float top = length(up) / 2.0;
 
         vec3 u;
         vec3 w = normalize(look_at - location);

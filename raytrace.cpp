@@ -156,7 +156,7 @@ bool blocked_light(vec3 pos, LightSource *light) {
 	ray.p0 = pos;
 	
 	for (int i=0; i < g_geom.size(); i++) {
-        if (g_geom[i]->intersect(ray) > 0.001) {
+        if (g_geom[i]->intersect(ray) > 0.00001) {
             return true;
         }
 	}
