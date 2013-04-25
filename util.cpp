@@ -5,6 +5,23 @@
 
 #include "util.h"
 
+
+float max(float a, float b) {
+    if (a > b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+float min(float a, float b) {
+    if (a < b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
 void read_vec4(istream &in, vec4 &v) {
     char dummy;
     in >> dummy;

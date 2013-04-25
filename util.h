@@ -14,6 +14,8 @@ void read_vec4(istream &in, vec4 &v);
 void skip_to(istream &in, char target_ch);
 void skip_line(istream &in);
 
+float max(float a, float b);
+float min(float a, float b);
 
 #define print3f(v, name) \
         printf("%s: %f %f %f\n", name, v.x, v.y, v.z);

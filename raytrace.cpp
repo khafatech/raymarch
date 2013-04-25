@@ -18,6 +18,7 @@
 using namespace std;
 
 #include "image.h"
+#include "util.h"
 
 #include "Camera.h"
 #include "LightSource.h"
@@ -150,8 +151,6 @@ Hit* find_closest_hit(vector<Hit*> &hits) {
 }
 
 
-
-
 bool blocked_light(vec3 pos, LightSource *light) {
 
     // TODO test with global obj (then there'll be no stack alloc/dealloc
@@ -169,13 +168,6 @@ bool blocked_light(vec3 pos, LightSource *light) {
 }
 
 
-float max(float a, float b) {
-    if (a > b) {
-        return a;
-    } else {
-        return b;
-    }
-}
 
 vec3 calcLighting(GeomObject *obj, vec3 N, vec3 pos, LightSource *light) {
 
@@ -219,7 +211,13 @@ vec3 calcLighting(GeomObject *obj, vec3 N, vec3 pos, LightSource *light) {
 }
 
 
-vec3 cast_ray(Ray &ray) {
+void reflect_ray(Ray &ray, vec3 N, vec3 pos) {
+    ray.p0 = pos;
+    ray.d =  ray.d - vec3(2.0) * dot(N, ray.d) * N;
+    ray.d += 0.0001;
+}
+
+vec3 cast_ray(Ray &ray, int recursion_depth=3) {
     Hit closest_hit(-1, NULL);
 
     // for lighting
@@ -227,6 +225,9 @@ vec3 cast_ray(Ray &ray) {
     LightSource *light;
     vec3 pos;
     float t;
+    
+    Ray reflected_ray;
+
 
     // intersect ray with geometry
     for (int i=0; i < g_geom.size(); i++) {
@@ -249,7 +250,16 @@ vec3 cast_ray(Ray &ray) {
         if (glm::length(N) != 0) {
             light = (LightSource *) g_lights[0]; // FIXME
 
-            return calcLighting(closest_hit.obj, N, pos, light);
+
+            if (recursion_depth <= 1) {
+                return calcLighting(closest_hit.obj, N, pos, light);
+            } else {
+                reflect_ray(ray, N, pos);
+                return calcLighting(closest_hit.obj, N, pos, light) +
+                    closest_hit.obj->finish.reflection *
+                    cast_ray(ray, recursion_depth-1);
+            }
+
 
         } else {
             return closest_hit.obj->pigment.to_vec3();
