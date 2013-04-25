@@ -64,6 +64,11 @@ void parse_pov(const string fname) {
     ifstream in;
     in.open(fname.c_str(), ifstream::in);
 
+    if (!in.is_open()) {
+        cerr << "can't open file: " << fname << endl;
+        exit(1);
+    }
+
     string word;
     BaseObject *read_obj;
 
@@ -73,7 +78,7 @@ void parse_pov(const string fname) {
         if (in.eof()) {
             break;
         }
-        cout << "read '" << word << "'  eof: " << in.eof() << endl;
+        // cout << "read '" << word << "'  eof: " << in.eof() << endl;
 
         if (word.size() > 0 && word[0] == '/') {
             // comment
@@ -164,6 +169,14 @@ bool blocked_light(vec3 pos, LightSource *light) {
 }
 
 
+float max(float a, float b) {
+    if (a > b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
 vec3 calcLighting(GeomObject *obj, vec3 N, vec3 pos, LightSource *light) {
 
 
@@ -171,6 +184,7 @@ vec3 calcLighting(GeomObject *obj, vec3 N, vec3 pos, LightSource *light) {
     vec3 L;
 
     vec3 color;
+    float specular;
     
     vec3 pigment3 = vec3(obj->pigment.color.x,
             obj->pigment.color.y, obj->pigment.color.z);
@@ -182,13 +196,25 @@ vec3 calcLighting(GeomObject *obj, vec3 N, vec3 pos, LightSource *light) {
 
     L = glm::normalize(light->location - pos);
     NL = MAX(dot(N, L), 0);
-	// NL = abs(dot(N, L));
+
+    vec3 V = glm::normalize(g_camera->location - pos);
+
+    float smoothness = obj->finish.roughness == 0 ? 1 : 1/obj->finish.roughness;
+
+    // specular
+    if (NL > 0) {
+        specular = pow(max(dot(V, vec3(2.0) * NL * N - L), 0), smoothness);
+    } else {
+        specular = 0;
+    }
 	
 	if (obj->name == "sphere") {
 		// cout << "NL: " << NL << endl;
 	}
 
-    color = light->color * vec3(NL) * pigment3 + obj->finish.ambient;
+    color = light->color *
+            (vec3(specular) * vec3(obj->finish.specular) +
+            vec3(NL) * pigment3) + obj->finish.ambient;
 
     return color;
 }
@@ -225,7 +251,10 @@ void cast_rays() {
 
         if (closest_hit.obj) {
             pos = ray->d * vec3(closest_hit.t) + ray->p0;
+            
+            // do xform
             N = closest_hit.obj->getNormal(pos);
+
             if (glm::length(N) != 0) {
                 light = (LightSource *) g_lights[0]; // FIXME
                 
@@ -265,7 +294,7 @@ int main(int argc, char* argv[]) {
         exit(1);
     }
 
-    string fname(argv[3] + 2);
+    string fname(argv[3]);
     parse_pov(fname);
 
     // print objects

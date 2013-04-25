@@ -16,8 +16,26 @@ loop over pixels:
 
 Coveats:
 
-* uses a hardcoded 1.33333 as an aspect ratio
 * output is name.pov.ppm
+
+
+TODO for p2:
+
+	- specular for phong
+	- another shading model
+	- reflections
+	- obj transforms
+	- cam transforms
+	- handin renders of simp_cam and simp_reflect
+
+
+## bug:
+* ray not intersecting with sphere when using translate (xmat_i)
+	(using the method of transforming the ray into object coords)
+
+
+
+
 
 
 

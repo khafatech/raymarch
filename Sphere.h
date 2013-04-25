@@ -27,7 +27,7 @@ public:
     }
 
 
-    float intersect(const Ray &ray) {
+    float intersect(const Ray &world_ray) {
 
         /*
         cout << "ray:\n";
@@ -35,8 +35,12 @@ public:
         cout << endl;
         */
 
-        float t1, t2;
+        Ray ray;
 
+        // ray is in object coordinates now
+        world_ray.transform(ray, xmat_i);
+
+        float t1, t2;
         vec3 e_min_c = ray.p0 - location;
         float dd = sqvec(ray.d);
         float sqrt_delta;
@@ -52,12 +56,13 @@ public:
             t1 = (-dot(ray.d, e_min_c) + sqrt_delta) / dd;
             t2 = (-dot(ray.d, e_min_c) - sqrt_delta) / dd;
 
-            /*
             // debug
+            /*
             cout << "t1: " << t1 << endl;
             cout << "t2: " << t2 << endl;
             */
 
+            
 
             return MIN(t1, t2);
 
@@ -67,8 +72,45 @@ public:
         }
     }
 
-    virtual vec3 getNormal(vec3 pos) {
-        return glm::normalize(pos - location);
+
+#define vec4_to_vec3(v4) vec3(v4.x, v4.y, v4.z)
+
+    vec3 transformv3(vec3 v, mat4 mat) {
+        vec3 result;
+        vec4 result4;
+
+        vec4 v4 = vec4(v.x, v.y, v.z, 1.0);
+
+        result4 = mat * v4;
+
+        result = vec4_to_vec3(result4);
+
+        return result;
+    }
+
+    vec3 transformv3_normal(vec3 v, mat4 mat) {
+        vec3 result;
+        vec4 result4;
+
+        vec4 v4 = vec4(v.x, v.y, v.z, 0.0);
+
+        result4 = mat * v4;
+
+        result = vec4_to_vec3(result4);
+
+        return result;
+    }
+
+    vec3 getNormal(vec3 pos_world) {
+
+        vec3 pos_obj = transformv3(pos_world, xmat_i);
+
+        vec3 norm_obj = glm::normalize(pos_obj - location);
+
+        // print3f(norm_obj, "norm_obj");
+
+        return glm::normalize(transformv3_normal(norm_obj, xmatT));
+        // return norm_obj;
     }
 
     void read(istream &in) {

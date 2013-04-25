@@ -5,14 +5,15 @@
 #include <iostream>
 #include <string>
 
+#include "glm/gtc/matrix_transform.hpp"
 #include "util.h"
-
 #include "Ray.h"
 
 using std::string;
 using std::istream;
 using glm::vec3;
 using glm::vec4;
+using glm::mat4;
 
 using namespace std;
 
@@ -106,6 +107,8 @@ public:
     virtual void read(istream &in) {
         string property;
 
+        mat4 xmat = mat4(1.0);
+
         while (property != "}" && !in.eof()) {
             in >> property;
 
@@ -115,14 +118,20 @@ public:
                 finish.read(in);
             } else if (property == "translate") {
                 read_vec3(in, translate);
-            } else if (property == "rotate") {
+                xmat = glm::translate(mat4(1.0), translate) * xmat;
+            }  else if (property == "rotate") {
                 read_vec3(in, rotate);
+                xmat = glm::rotate(mat4(1.0), rotate.x, vec3(1,0,0)) * xmat;
+                xmat = glm::rotate(mat4(1.0), rotate.y, vec3(0,1,0)) * xmat;
+                xmat = glm::rotate(mat4(1.0), rotate.z, vec3(0,0,1)) * xmat;
             } else if (property == "scale") {
                 read_vec3(in, scale);
+                xmat =  glm::scale(mat4(1.0), scale) * xmat;
             }
         }
 
-        location += translate;
+        xmat_i = glm::inverse(xmat);
+        xmatT = glm::transpose(xmat_i);
     }
     
     virtual void print_properties() {
@@ -139,6 +148,7 @@ public:
     }
 
     virtual vec3 getNormal(vec3 pos) {
+        // cout << "hurrr " << name << endl;
         return vec3(0.0);
     }
     
@@ -149,6 +159,8 @@ public:
     vec3 rotate;
     vec3 scale;
 
+    mat4 xmat_i;
+    mat4 xmatT;
 };
 
 #endif
