@@ -48,6 +48,10 @@ struct Pigment {
         skip_to(in, '}');
     }
 
+    vec3 to_vec3() {
+        return vec3(color.x, color.y, color.z);
+    }
+
     vec4 color;
 };
 

@@ -182,7 +182,6 @@ vec3 calcLighting(GeomObject *obj, vec3 N, vec3 pos, LightSource *light) {
 
     float NL;
     vec3 L;
-
     vec3 color;
     float specular;
     
@@ -220,60 +219,59 @@ vec3 calcLighting(GeomObject *obj, vec3 N, vec3 pos, LightSource *light) {
 }
 
 
-void cast_rays() {
-    Ray *ray;
-    
-    // TODO parametrize max distance (doesn't work now)
-    Hit closest_hit(1000, NULL);
+vec3 cast_ray(Ray &ray) {
+    Hit closest_hit(-1, NULL);
 
     // for lighting
     vec3 N;
     LightSource *light;
     vec3 pos;
-
     float t;
+
+    // intersect ray with geometry
+    for (int i=0; i < g_geom.size(); i++) {
+        t = g_geom[i]->intersect(ray);
+        if (t > 0 && (closest_hit.obj == NULL || t < closest_hit.t)) {
+            closest_hit.t = t;
+            closest_hit.obj = g_geom[i];
+        }
+    }
+
+    // t = cur_obj->intersect(*ray);
+    // cout << "t: " << t << endl;
+
+    if (closest_hit.obj) {
+        pos = ray.d * vec3(closest_hit.t) + ray.p0;
+        
+        // do xform
+        N = closest_hit.obj->getNormal(pos);
+
+        if (glm::length(N) != 0) {
+            light = (LightSource *) g_lights[0]; // FIXME
+
+            return calcLighting(closest_hit.obj, N, pos, light);
+
+        } else {
+            return closest_hit.obj->pigment.to_vec3();
+        }
+    }
+
+    // background
+    return vec3(0);
+
+    closest_hit.obj = NULL;
+}
+
+void cast_rays() {
+    Ray *ray;
+    
+
     for (int y=0; y < g_image_height; y++)
     for (int x=0; x < g_image_width; x++) {
         // ray = g_camera->genOrthoRay(x, y);
         ray = g_camera->genRay(x, y);
 
-        // intersect ray with geometry
-        for (int i=0; i < g_geom.size(); i++) {
-            t = g_geom[i]->intersect(*ray);
-            if (t > 0 && (closest_hit.obj == NULL || t < closest_hit.t)) {
-                closest_hit.t = t;
-                closest_hit.obj = g_geom[i];
-            }
-        }
-
-        // t = cur_obj->intersect(*ray);
-        // cout << "t: " << t << endl;
-
-        if (closest_hit.obj) {
-            pos = ray->d * vec3(closest_hit.t) + ray->p0;
-            
-            // do xform
-            N = closest_hit.obj->getNormal(pos);
-
-            if (glm::length(N) != 0) {
-                light = (LightSource *) g_lights[0]; // FIXME
-                
-                
-                g_image[x][y] = calcLighting(closest_hit.obj, N, pos, light);
-
-                // debug
-                if (x == 320 && y == 217) {
-                	print3f(pos, "pos");
-                	print3f(N, "N");
-                }
-                
-            } else {
-                g_image[x][y] = closest_hit.obj->pigment;
-            }
-
-        }
-
-        closest_hit.obj = NULL;
+        g_image[x][y] = cast_ray(*ray);
 
         delete ray;
     }
@@ -282,7 +280,7 @@ void cast_rays() {
 int main(int argc, char* argv[]) {
 
     if (argc != 4) {
-        cerr << "usage: " << argv[0] << " width height -Iinput.pov\n";
+        cerr << "usage: " << argv[0] << " width height input.pov\n";
         exit(1);
     }
 
