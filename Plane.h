@@ -48,6 +48,7 @@ public:
             return 0;
         }
         
+        // location is the normal for the plane
         float npd = distance - dot(location, ray.p0);
 
         float t = npd / nd;

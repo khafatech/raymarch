@@ -168,8 +168,55 @@ bool blocked_light(vec3 pos, LightSource *light) {
 }
 
 
+vec3 (*calcLighting)(GeomObject *obj, vec3 N, vec3 pos, LightSource *light);
 
-vec3 calcLighting(GeomObject *obj, vec3 N, vec3 pos, LightSource *light) {
+
+vec3 calcLightingGaussian(GeomObject *obj, vec3 N, vec3 pos, LightSource *light) {
+
+
+    float NL;
+    vec3 L;
+    vec3 color;
+    float specular;
+    
+    vec3 pigment3 = vec3(obj->pigment.color.x,
+            obj->pigment.color.y, obj->pigment.color.z);
+    
+    if (blocked_light(pos, light)) {
+        // shadow
+        return vec3(0) + obj->finish.ambient; // this is temporary FIXME
+    }
+
+    L = glm::normalize(light->location - pos);
+    NL = MAX(dot(N, L), 0);
+
+    vec3 V = glm::normalize(g_camera->location - pos);
+
+    float smoothness = obj->finish.roughness == 0 ? 1 : 1/obj->finish.roughness;
+
+    // specular
+    if (NL > 0) {
+        specular = exp(-pow(dot(V, vec3(2.0) * NL * N - L), 2) /
+                smoothness);
+    } else {
+        specular = 0;
+    }
+	
+	if (obj->name == "sphere") {
+		// cout << "NL: " << NL << endl;
+	}
+
+    color = light->color *
+            (vec3(specular) * vec3(obj->finish.specular) +
+            vec3(NL) * pigment3) + obj->finish.ambient;
+
+    return color;
+}
+
+
+
+
+vec3 calcLightingPhong(GeomObject *obj, vec3 N, vec3 pos, LightSource *light) {
 
 
     float NL;
@@ -214,7 +261,10 @@ vec3 calcLighting(GeomObject *obj, vec3 N, vec3 pos, LightSource *light) {
 void reflect_ray(Ray &ray, vec3 N, vec3 pos) {
     ray.p0 = pos;
     ray.d =  ray.d - vec3(2.0) * dot(N, ray.d) * N;
-    ray.d += 0.0001;
+}
+
+void add_epsilon(Ray &ray) {
+    ray.p0 = ray.p0 + ray.d * vec3(0.0001);
 }
 
 vec3 cast_ray(Ray &ray, int recursion_depth=3) {
@@ -251,10 +301,11 @@ vec3 cast_ray(Ray &ray, int recursion_depth=3) {
             light = (LightSource *) g_lights[0]; // FIXME
 
 
-            if (recursion_depth <= 1) {
+            if (recursion_depth <= 1 || closest_hit.obj->finish.reflection == 0) {
                 return calcLighting(closest_hit.obj, N, pos, light);
             } else {
                 reflect_ray(ray, N, pos);
+                add_epsilon(ray);
                 return calcLighting(closest_hit.obj, N, pos, light) +
                     closest_hit.obj->finish.reflection *
                     cast_ray(ray, recursion_depth-1);
@@ -301,6 +352,8 @@ int main(int argc, char* argv[]) {
         cerr << "Error: Width and height must be positive\n";
         exit(1);
     }
+
+    calcLighting = calcLightingPhong;
 
     string fname(argv[3]);
     parse_pov(fname);
