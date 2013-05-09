@@ -1,11 +1,19 @@
 
 
-To compile, just run make -B. Everything is included.
 
+To compile, just run "make -B". Everything is included.
+
+
+
+Refractions don't produce an image as expected but they produce something.
 
 
 
 * output is name.pov.ppm
+
+
+
+
 
 
 done for p2:
@@ -16,21 +24,10 @@ done for p2:
 	- handin renders of simp_cam and simp_reflect
 
 
-done for p2:
+TODO for p2:
 	- another shading model
 
 
-
-
-Raytracer part1
-
-- draws just pigments of spheres and planes
-
-
-loop over pixels:
-    - get ray in world coordinates
-    - for each geom object:
-        find intersection
 
 
 

@@ -53,7 +53,7 @@ public:
 
     virtual float intersect(const Ray &world_ray) {
 
-        Ray &ray;
+        Ray ray;
 
         world_ray.transform(ray, xmat_i);
 
