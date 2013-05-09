@@ -51,7 +51,11 @@ public:
         }
     }
 
-    virtual float intersect(const Ray &ray) {
+    virtual float intersect(const Ray &world_ray) {
+
+        Ray &ray;
+
+        world_ray.transform(ray, xmat_i);
 
         // baycentric coords equations from Shirley book sec 10.3
         

@@ -258,14 +258,42 @@ vec3 calcLightingPhong(GeomObject *obj, vec3 N, vec3 pos, LightSource *light) {
 }
 
 
+void add_epsilon(Ray &ray) {
+    ray.p0 = ray.p0 + ray.d * vec3(0.0001);
+}
+
 void reflect_ray(Ray &ray, vec3 N, vec3 pos) {
     ray.p0 = pos;
     ray.d =  ray.d - vec3(2.0) * dot(N, ray.d) * N;
 }
 
-void add_epsilon(Ray &ray) {
-    ray.p0 = ray.p0 + ray.d * vec3(0.0001);
+// psuedo code from Shirley's book, p. 214
+bool refract_ray(const Ray &ray, const vec3 N, Ray &t, float n_over_n1) {
+
+    vec3 d = normalize(ray.d);
+    vec3 n = normalize(N);
+
+    float under_sqrt = 1 - POWER2(n_over_n1) * (1 - POWER2(dot(d, n)));
+
+    vec3 first_term;
+
+    if (under_sqrt < 0) {
+        // total internal reflect
+        return false;
+    }
+
+    first_term = n_over_n1 * (ray.d - N * (dot(d,n)));
+
+
+
+    t.d = first_term - N * sqrt(under_sqrt);
+    t.p0 = ray.p0;
+
+    add_epsilon(t);
+
+    return true;
 }
+
 
 vec3 cast_ray(Ray &ray, int recursion_depth=3) {
     Hit closest_hit(-1, NULL);
@@ -289,25 +317,50 @@ vec3 cast_ray(Ray &ray, int recursion_depth=3) {
     }
 
 
-    vec3 final_color;
+    vec3 final_color(0.0);
+    Ray T;
 
     if (closest_hit.obj) {
         pos = ray.d * vec3(closest_hit.t) + ray.p0;
-        
-        // do xform
         N = closest_hit.obj->getNormal(pos);
-
         light = (LightSource *) g_lights[0]; // FIXME
 
-
-        if (recursion_depth <= 1 || closest_hit.obj->finish.reflection == 0) {
+        if (recursion_depth <= 1 ) {
             final_color = calcLighting(closest_hit.obj, N, pos, light);
         } else {
+            if (closest_hit.obj->finish.refraction > 0) {
+
+                // refract
+                float d_dot_n = dot(ray.d, N);
+                if (d_dot_n < 0) {
+                    // out of obj
+
+                    refract_ray(ray, N, T, 1/closest_hit.obj->finish.ior);
+
+                    final_color = cast_ray(T, recursion_depth-1);
+
+                } else {
+                    // in obj
+                    if (refract_ray(ray, N, T, closest_hit.obj->finish.ior/1)) {
+                        return cast_ray(T, recursion_depth-1);
+                    } else {
+                        reflect_ray(ray, N, pos);
+                        add_epsilon(ray);
+                        return cast_ray(ray, recursion_depth-1);
+                    }
+                }
+                
+                // refract_ray(
+                // final_color = 
+            }
             reflect_ray(ray, N, pos);
             add_epsilon(ray);
-            final_color = calcLighting(closest_hit.obj, N, pos, light) +
-                closest_hit.obj->finish.reflection *
-                cast_ray(ray, recursion_depth-1);
+
+            final_color += (1 -closest_hit.obj->finish.reflection)
+                * calcLighting(closest_hit.obj, N, pos, light)
+                + closest_hit.obj->finish.reflection
+                * cast_ray(ray, recursion_depth-1);
+            
         }
     } else {
         // background
