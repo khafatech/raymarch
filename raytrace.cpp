@@ -288,8 +288,6 @@ vec3 cast_ray(Ray &ray, int recursion_depth=3) {
         }
     }
 
-    // t = cur_obj->intersect(*ray);
-    // cout << "t: " << t << endl;
 
     vec3 final_color;
 
