@@ -65,6 +65,25 @@ public:
         GeomObject::print_properties();
     }
 
+    vec3 getColor(vec3 pos) {
+        vec3 white = vec3(0, 0, 1);
+        vec3 black = vec3(1, 1, 0);
+
+        if (((int) floor(pos.x)) % 2 == 0) {
+            if (((int) floor(pos.z)) % 2 != 0) {
+                return white;
+            } else {
+                return black;
+            }
+        } else {
+            if (((int) floor(pos.z)) % 2 == 0) {
+                return white;
+            } else {
+                return black;
+            }
+        }
+    }
+
     float distance;
 };
 

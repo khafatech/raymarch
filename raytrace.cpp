@@ -215,7 +215,6 @@ vec3 calcLightingGaussian(GeomObject *obj, vec3 N, vec3 pos, LightSource *light)
 
 
 
-
 vec3 calcLightingPhong(GeomObject *obj, vec3 N, vec3 pos, LightSource *light) {
 
 
@@ -245,14 +244,15 @@ vec3 calcLightingPhong(GeomObject *obj, vec3 N, vec3 pos, LightSource *light) {
     } else {
         specular = 0;
     }
-	
-	if (obj->name == "sphere") {
-		// cout << "NL: " << NL << endl;
-	}
 
-    color = light->color *
-            (vec3(specular) * vec3(obj->finish.specular) +
-            vec3(NL) * pigment3) + obj->finish.ambient;
+    Plane *plane;
+    if ((plane = dynamic_cast<Plane *>(obj))) {
+        pigment3 = plane->getColor(pos);
+    }
+	
+    color = light->color
+            * (vec3(specular) * vec3(obj->finish.specular)
+            + vec3(NL) * pigment3) + obj->finish.ambient;
 
     return color;
 }
@@ -291,51 +291,53 @@ vec3 cast_ray(Ray &ray, int recursion_depth=3) {
     // t = cur_obj->intersect(*ray);
     // cout << "t: " << t << endl;
 
+    vec3 final_color;
+
     if (closest_hit.obj) {
         pos = ray.d * vec3(closest_hit.t) + ray.p0;
         
         // do xform
         N = closest_hit.obj->getNormal(pos);
 
-        if (glm::length(N) != 0) {
-            light = (LightSource *) g_lights[0]; // FIXME
+        light = (LightSource *) g_lights[0]; // FIXME
 
 
-            if (recursion_depth <= 1 || closest_hit.obj->finish.reflection == 0) {
-                return calcLighting(closest_hit.obj, N, pos, light);
-            } else {
-                reflect_ray(ray, N, pos);
-                add_epsilon(ray);
-                return calcLighting(closest_hit.obj, N, pos, light) +
-                    closest_hit.obj->finish.reflection *
-                    cast_ray(ray, recursion_depth-1);
-            }
-
-
+        if (recursion_depth <= 1 || closest_hit.obj->finish.reflection == 0) {
+            final_color = calcLighting(closest_hit.obj, N, pos, light);
         } else {
-            return closest_hit.obj->pigment.to_vec3();
+            reflect_ray(ray, N, pos);
+            add_epsilon(ray);
+            final_color = calcLighting(closest_hit.obj, N, pos, light) +
+                closest_hit.obj->finish.reflection *
+                cast_ray(ray, recursion_depth-1);
         }
+    } else {
+        // background
+        final_color = vec3(0);
     }
 
-    // background
-    return vec3(0);
-
-    closest_hit.obj = NULL;
+    return final_color;
 }
 
 void cast_rays() {
     Ray *ray;
     
 
-    for (int y=0; y < g_image_height; y++)
-    for (int x=0; x < g_image_width; x++) {
-        // ray = g_camera->genOrthoRay(x, y);
-        ray = g_camera->genRay(x, y);
+    for (int y=0; y < g_image_height; y++) { 
+        for (int x=0; x < g_image_width; x++) {
+            // ray = g_camera->genOrthoRay(x, y);
+            ray = g_camera->genRay(x, y);
 
-        g_image[x][y] = cast_ray(*ray);
+            g_image[x][y] = cast_ray(*ray);
 
-        delete ray;
+            delete ray;
+
+        }
+        printf("\r %.3f done", 100 * ((float) y) / g_image_height);
+        cout.flush();
     }
+
+    cout << endl;
 }
 
 int main(int argc, char* argv[]) {
