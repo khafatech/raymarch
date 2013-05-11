@@ -5,11 +5,20 @@ To compile, just run "make -B". Everything is included.
 
 
 
-Refractions don't produce an image as expected but they produce something.
+Refractions mostly work.
+
+For recurse*.pov files, the pigment color is rendering to grey for some reason (clipping?)
 
 
+Images in images/ with renders of
+- simple_refract.pov
+- recurse_simp.pov
+- recurses.pov
+- simple_tri.pov
+- ugly_part.pov
 
-* output is name.pov.ppm
+Some interesting images are in images/interesting/
+Most notably, elongated_refract.png and simple_refract_lens.png
 
 
 
@@ -23,9 +32,6 @@ done for p2:
 	- cam transforms
 	- handin renders of simp_cam and simp_reflect
 
-
-TODO for p2:
-	- another shading model
 
 
 

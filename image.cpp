@@ -49,7 +49,7 @@ void free_image(int w, int h, Image image) {
 
 
 
-void write_image(string fname) {
+void write_image(Image image, string fname) {
     // ppm
     
     FILE *file = fopen(fname.c_str(), "w+");
@@ -64,7 +64,7 @@ void write_image(string fname) {
     for (int y=0; y < g_image_height; y++) {
     	for (int x=0; x < g_image_width; x++) {
 	   	    fprintf(file, "%d %d %d # %d, %d\n",
-	   	     g_image[x][y].r, g_image[x][y].g, g_image[x][y].b, x, y);
+	   	     image[x][y].r, image[x][y].g, image[x][y].b, x, y);
     	}
     }
     

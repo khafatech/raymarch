@@ -34,6 +34,7 @@ int g_image_width = 640;
 int g_image_height = 480;
 
 Image g_image;
+Image g_dbg_image;
 
 
 
@@ -245,16 +246,14 @@ vec3 calcLightingPhong(GeomObject *obj, vec3 N, vec3 pos, LightSource *light) {
         specular = 0;
     }
 
-    /*
     Plane *plane;
     if ((plane = dynamic_cast<Plane *>(obj))) {
         pigment3 = plane->getColor(pos);
     }
-    */
 	
     color = light->color
-            * vec3(specular) * vec3(obj->finish.specular)
-            + vec3(NL) * pigment3 + obj->finish.ambient;
+            * (vec3(specular) * vec3(obj->finish.specular)
+            + vec3(NL) * pigment3) + obj->finish.ambient;
 
     return color;
 }
@@ -270,7 +269,7 @@ void reflect_ray(Ray &ray, vec3 N, vec3 pos) {
 }
 
 // psuedo code from Shirley's book, p. 214
-bool refract_ray(const Ray &ray, const vec3 &pos, const vec3 N, Ray &t, float n_over_n1) {
+bool refract_ray(const Ray &ray, const vec3 N, Ray &t, float n_over_n1, vec3 pos) {
 
     vec3 norm_d = normalize(ray.d);
     vec3 norm_n = normalize(N);
@@ -295,6 +294,12 @@ bool refract_ray(const Ray &ray, const vec3 &pos, const vec3 N, Ray &t, float n_
 }
 
 
+int num_initial_rays = 1;
+
+
+
+
+
 vec3 cast_ray(Ray &ray, int recursion_depth=3) {
     Hit closest_hit(-1, NULL);
 
@@ -316,14 +321,25 @@ vec3 cast_ray(Ray &ray, int recursion_depth=3) {
         }
     }
 
+    
 
     vec3 final_color(0.0);
     Ray T;
 
     if (closest_hit.obj) {
+
         pos = ray.d * vec3(closest_hit.t) + ray.p0;
         N = closest_hit.obj->getNormal(pos);
         light = (LightSource *) g_lights[0]; // FIXME
+
+
+        printf("---\n");
+        printf("ray_cast()\nobj: %s\n", closest_hit.obj->name.c_str());
+        print3f(pos, "pos");
+        print3f(ray.d, "ray.d");
+
+        printf("in sphere? r = %f\n", glm::length(pos));
+
 
         if (recursion_depth <= 1 ) {
             final_color = calcLighting(closest_hit.obj, N, pos, light);
@@ -334,12 +350,13 @@ vec3 cast_ray(Ray &ray, int recursion_depth=3) {
                 float d_dot_n = dot(ray.d, N);
                 if (d_dot_n < 0) {
                     // out of obj
-                    refract_ray(ray, pos, N, T, 1/closest_hit.obj->finish.ior);
+                    refract_ray(ray, N, T, 1/closest_hit.obj->finish.ior);
                     final_color = cast_ray(T, recursion_depth-1) *
                         (closest_hit.obj->finish.refraction);
                 } else {
                     // in obj0
-                    if (refract_ray(ray, pos, -N, T, closest_hit.obj->finish.ior/1)) {
+                    cout << "in obj!\n";
+                    if (refract_ray(ray, N, T, closest_hit.obj->finish.ior/1)) {
                         // not total internal reflect
                         return cast_ray(T, recursion_depth-1) *
                                (closest_hit.obj->finish.refraction);
@@ -373,9 +390,16 @@ vec3 cast_ray(Ray &ray, int recursion_depth=3) {
 void cast_rays() {
     Ray *ray;
     
+    int x, y;
+    x = g_image_width/2;
+    y = g_image_height/2 - 10;
 
+    cout << "x: " << x << endl;
+
+    /*
     for (int y=0; y < g_image_height; y++) { 
         for (int x=0; x < g_image_width; x++) {
+        */
             // ray = g_camera->genOrthoRay(x, y);
             ray = g_camera->genRay(x, y);
 
@@ -383,10 +407,13 @@ void cast_rays() {
 
             delete ray;
 
+#if 0
+
         }
         printf("\r %.3f done", 100 * ((float) y) / g_image_height);
         cout.flush();
     }
+#endif 
 
     cout << endl;
 }
@@ -424,6 +451,8 @@ int main(int argc, char* argv[]) {
 
     g_camera->setImageDimention(g_image_width, g_image_height);
 
+    g_dbg_image = init_image(400, 300);
+
 
     // the main thing
     cast_rays();
@@ -434,6 +463,8 @@ int main(int argc, char* argv[]) {
     // works only with ppm now
     string outfile_name(fname + ".ppm");
 	write_image(g_image, outfile_name);
+
+    write_image(g_dbg_image, "dbg.ppm");
 	
 
     return 0;

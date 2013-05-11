@@ -56,14 +56,17 @@ public:
             t1 = (-dot(ray.d, e_min_c) + sqrt_delta) / dd;
             t2 = (-dot(ray.d, e_min_c) - sqrt_delta) / dd;
 
-            // debug
-            /*
-            cout << "t1: " << t1 << endl;
-            cout << "t2: " << t2 << endl;
-            */
 
+            // return leaset positive t
+            if (t1 < 0) {
+                return t2;
+            }
+
+            if (t2 < 0) {
+                return t1;
+            }
+                
             
-
             return MIN(t1, t2);
 
         } else {

@@ -21,7 +21,7 @@ using namespace std;
 struct Pigment {
 
     Pigment() {
-        color = vec4(0.0, 0.0, 0.0, 1.0);
+        color = vec4(0.0, 0.0, 0.0, 0.0);
     }
 
     void read(istream &in) {
@@ -43,7 +43,7 @@ struct Pigment {
             color.x = color3.x;
             color.y = color3.y;
             color.z = color3.z;
-            color.w = 1.0;
+            color.w = 0.0;
         }
         skip_to(in, '}');
     }

@@ -50,7 +50,7 @@ typedef Color** Image;
 
 Image init_image(int w, int h);
 void free_image(int w, int h, Image image);
-void write_image(std::string fname);
+void write_image(Image, std::string fname);
 
 
 
