@@ -155,6 +155,38 @@ public:
         // cout << "hurrr " << name << endl;
         return vec3(0.0);
     }
+
+
+protected:
+#define vec4_to_vec3(v4) vec3(v4.x, v4.y, v4.z)
+
+    vec3 transformv3(vec3 v, mat4 mat) {
+        vec3 result;
+        vec4 result4;
+
+        vec4 v4 = vec4(v.x, v.y, v.z, 1.0);
+
+        result4 = mat * v4;
+
+        result = vec4_to_vec3(result4);
+
+        return result;
+    }
+
+    vec3 transformv3_normal(vec3 v, mat4 mat) {
+        vec3 result;
+        vec4 result4;
+
+        vec4 v4 = vec4(v.x, v.y, v.z, 0.0);
+
+        result4 = mat * v4;
+
+        result = vec4_to_vec3(result4);
+
+        return result;
+    }
+
+public:
     
     Pigment pigment;
     Finish finish;

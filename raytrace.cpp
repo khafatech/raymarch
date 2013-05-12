@@ -153,14 +153,17 @@ Hit* find_closest_hit(vector<Hit*> &hits) {
 
 bool blocked_light(vec3 pos, LightSource *light) {
 
-    // TODO test with global obj (then there'll be no stack alloc/dealloc
 	Ray ray;
 	
 	ray.d = light->location - pos;
 	ray.p0 = pos;
+    
+    float t;
 	
 	for (int i=0; i < g_geom.size(); i++) {
-        if (g_geom[i]->intersect(ray) > 0.00001) {
+        t = g_geom[i]->intersect(ray);
+        // if between light and intersect pt.
+        if (t > 1.00001 && t < 1.0) {
             return true;
         }
 	}
@@ -295,7 +298,7 @@ bool refract_ray(const Ray &ray, const vec3 &pos, const vec3 N, Ray &t, float n_
 }
 
 
-vec3 cast_ray(Ray &ray, int recursion_depth=3) {
+vec3 cast_ray(Ray &ray, int recursion_depth=6) {
     Hit closest_hit(-1, NULL);
 
     // for lighting

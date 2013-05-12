@@ -37,10 +37,15 @@ public:
         GeomObject::read(in);
     }
 
-    virtual float intersect(const Ray &ray) {
+    virtual float intersect(const Ray &world_ray) {
         /* http://www.siggraph.org/education/materials/HyperGraph/raytrace/rayplane_intersection.htm
            t = -(N . P0 -D)/ (N . d)
         */
+
+        Ray ray;
+
+        // ray is in object coordinates now
+        world_ray.transform(ray, xmat_i);
 
         float nd = dot(location, ray.d);
         if (nd == 0) {
@@ -56,8 +61,9 @@ public:
         return t;
     }
 
-    vec3 getNormal(vec3 pos) {
-        return location;
+    vec3 getNormal(vec3 pos_world) {
+        vec3 norm_obj = location;
+        return glm::normalize(transformv3_normal(norm_obj, xmatT));
     }
 
     void print_properties() {
