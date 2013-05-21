@@ -103,6 +103,7 @@ struct Finish {
 };
 
 
+class BBox;
 
 class GeomObject : public BaseObject {
 

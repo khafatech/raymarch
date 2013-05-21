@@ -99,6 +99,8 @@ int main ()
     print3f(u, "u"); 
     */
 
+    printf("v[0]: %f\n", v[0]);
+
 
     glm::mat4 m;
 
