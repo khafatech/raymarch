@@ -33,6 +33,8 @@ struct BVHNode : GeomObject {
             box = right->box + left->box; // TODO
         } else {
 
+            // comment
+
         }
     }
 
