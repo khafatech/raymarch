@@ -47,6 +47,11 @@ int main(void) {
     
     BBox box1(vec3(0,0,0), vec3(1,1,1));
 
+    BBox box2(vec3(-1,0.5,0.5), vec3(1,1,3));
+
+    BBox box3 = box1 + box2;
+
+
     
     float t;
 
@@ -54,6 +59,9 @@ int main(void) {
 
     cout << "box3 x r3: " << t << endl;
 
+    
+    cout << "box3:\n";
+    box3.print_properties();
 
 
     return 0;

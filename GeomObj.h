@@ -8,6 +8,8 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "util.h"
 #include "Ray.h"
+#include "BBox.h"
+
 
 using std::string;
 using std::istream;
@@ -16,6 +18,8 @@ using glm::vec4;
 using glm::mat4;
 
 using namespace std;
+
+
 
 
 struct Pigment {
@@ -102,8 +106,6 @@ struct Finish {
     float ambient, diffuse, specular, roughness, reflection, refraction, ior;
 };
 
-
-class BBox;
 
 class GeomObject : public BaseObject {
 
@@ -198,6 +200,9 @@ public:
 
     mat4 xmat_i;
     mat4 xmatT;
+
+    BBox box;
 };
+
 
 #endif

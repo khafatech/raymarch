@@ -4,26 +4,29 @@
 #include <string>
 #include "glm/glm.hpp"
 #include "util.h"
-
-#include "BaseObject.h"
-#include "GeomObj.h"
+#include "Ray.h"
 
 using std::string;
+using glm::vec3;
 
 
-
-class BBox : public GeomObject {
+class BBox {
 
 public:
 
     BBox() {
-        name = "bbox";
+        corner1 = vec3(0.0);
+        corner2 = vec3(0.0);
     }
 
     BBox(vec3 min, vec3 max) {
-        name = "bbox";
         this->corner1 = min;
         this->corner2 = max;
+        calcCenter();
+    }
+
+    void calcCenter() {
+        center = vec3(0.5) * (corner1 + corner2);
     }
 
     void read(istream &in) {
@@ -46,7 +49,6 @@ public:
     void print_properties() {
         print3f(corner1, "corner1");
         print3f(corner2, "corner2");
-        GeomObject::print_properties();
     }
 
     float intersect(const Ray &world_ray) {
@@ -79,8 +81,26 @@ public:
         return 1;
     }
 
+    BBox operator+(const BBox &other) const {
+
+        BBox result;
+
+        result.corner1.x = min(corner1.x, other.corner1.x);
+        result.corner1.y = min(corner1.y, other.corner1.y);
+        result.corner1.z = min(corner1.z, other.corner1.z);
+
+        result.corner2.x = max(corner2.x, other.corner2.x);
+        result.corner2.y = max(corner2.y, other.corner2.y);
+        result.corner2.z = max(corner2.z, other.corner2.z);
+
+        result.calcCenter();
+
+        return result;
+    }
+
     vec3 corner1; // min
     vec3 corner2; // max
+    vec3 center;
 };
 
 #endif

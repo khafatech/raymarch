@@ -28,6 +28,7 @@ using namespace std;
 #include "Triangle.h"
 #include "Ray.h"
 
+#include "BVH.h"
 
 // default values
 int g_image_width = 640;
