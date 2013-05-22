@@ -435,6 +435,8 @@ int main(int argc, char* argv[]) {
 
     g_obj_tree = new BVHNode(g_geom, 0, (int) g_geom.size(), 0);
 
+
+    g_obj_tree->print();
     
 
     /*

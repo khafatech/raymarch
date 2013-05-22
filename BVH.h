@@ -5,6 +5,10 @@
 #include "GeomObj.h"
 #include "BBox.h"
 
+#include "Sphere.h"
+
+
+
 #include <vector>
 
 #include <algorithm>
@@ -16,16 +20,15 @@ using namespace std;
 using std::vector;
 
 bool cmpXaxis(GeomObject *a, GeomObject *b) {
-    cout << "cmpX: geomObj a:" << a << ", b: " << b << endl;
-
+    // cout << "cmpX: geomObj a:" << a << ", b: " << b << endl;
     return a->box.center.x < b->box.center.x;
 }
 bool cmpYaxis(GeomObject *a, GeomObject *b) {
-    cout << "cmpY: geomObj a:" << a << ", b: " << b << endl;
+    // cout << "cmpY: geomObj a:" << a << ", b: " << b << endl;
     return a->box.center.y < b->box.center.y;
 }
 bool cmpZaxis(GeomObject *a, GeomObject *b) {
-    cout << "cmpZ: geomObj a:" << a << ", b: " << b << endl;
+    // cout << "cmpZ: geomObj a:" << a << ", b: " << b << endl;
     return a->box.center.z < b->box.center.z;
 }
 
@@ -49,10 +52,46 @@ struct BVHNode : GeomObject {
     }
     */
 
+    void print_tabs(int depth) {
+        while (depth--) {
+            cout << "  ";
+        }
+    }
+
+    void print() {
+        print(this, 0);
+    }
+
+    void print(GeomObject *node, int depth) {
+        
+        Sphere *sphere;
+
+        BVHNode *bvhNode;
+
+        if (node == NULL) {
+            print_tabs(depth);
+            cout << "NULL\n";
+            return;
+        } else if ((sphere = dynamic_cast<Sphere *>(node))) {
+            print_tabs(depth);
+            cout << "sphere. r: " << sphere->radius << ", ";
+            print3f(sphere->location, "pos");
+        } else if ((bvhNode = dynamic_cast<BVHNode *>(node))) {
+            print_tabs(depth);
+            cout << "left: " << bvhNode->left <<endl;
+            print(bvhNode->left, depth+1);
+
+            print_tabs(depth);
+            cout << "right: " << bvhNode->right <<endl;
+            print(bvhNode->right, depth+1);
+        }
+
+    }
+
     BVHNode(vector<GeomObject *> &obj_vec, int start, int end, int axis) {
         int num_geom = end - start;
 
-        cout << "\n** BVHNode: start: " << start << " end: " << end << endl;
+        // cout << "\n** BVHNode: start: " << start << " end: " << end << endl;
 
         if (num_geom == 1) {
             right = obj_vec[start];
