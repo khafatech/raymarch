@@ -49,9 +49,13 @@ public:
         Ray *ray = new Ray();
 
 
-        // TODO - put aspect ratio
+        // uses aspect ratio form pov
         float r = length(right) / 2.0;
         float top = length(up) / 2.0;
+
+
+        // TODO - randomize x,y +- 0.5
+
 
         vec3 u;
         vec3 w = normalize(look_at - location);

@@ -2,7 +2,7 @@
 
 CC = g++
 
-CFLAGS = -g -Wall #-O3
+CFLAGS = -ggdb -Wall #-O3
 
 LDFLAGS = 
 
@@ -14,7 +14,7 @@ TAR = raytrace.tgz
 all: raytrace
 
 raytrace:	raytrace.o image.o util.o
-		$(CC) $^ -o $@ $(CFLAGS)
+		$(CC) $(CFLAGS) $^ -o $@ 
 
 raytrace_debug:	raytrace_debug.o image.o util.o
 		$(CC) $^ -o $@ $(CFLAGS)
@@ -24,7 +24,7 @@ test_intersect:	test_intersect.o util.o
 
 
 %.o: %.c $(wildcard %.h)
-		$(CC) $< -c $(CFLAGS)
+		$(CC) $(CFLAGS) $< -c
 
 
 handin:

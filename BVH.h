@@ -9,16 +9,23 @@
 
 #include <algorithm>
 
+#include <iostream>
+using namespace std;
+
 
 using std::vector;
 
 bool cmpXaxis(GeomObject *a, GeomObject *b) {
+    cout << "cmpX: geomObj a:" << a << ", b: " << b << endl;
+
     return a->box.center.x < b->box.center.x;
 }
 bool cmpYaxis(GeomObject *a, GeomObject *b) {
+    cout << "cmpY: geomObj a:" << a << ", b: " << b << endl;
     return a->box.center.y < b->box.center.y;
 }
 bool cmpZaxis(GeomObject *a, GeomObject *b) {
+    cout << "cmpZ: geomObj a:" << a << ", b: " << b << endl;
     return a->box.center.z < b->box.center.z;
 }
 
@@ -35,8 +42,17 @@ struct BVHNode : GeomObject {
     }
 
 
+    /*
+    TODO
+    BVHNode(vector<GeomObject *> &obj_vec, int start, int end, int axis) {
+        
+    }
+    */
+
     BVHNode(vector<GeomObject *> &obj_vec, int start, int end, int axis) {
         int num_geom = end - start;
+
+        cout << "\n** BVHNode: start: " << start << " end: " << end << endl;
 
         if (num_geom == 1) {
             right = obj_vec[start];
@@ -67,11 +83,12 @@ struct BVHNode : GeomObject {
 
     int partition_objs(vector<GeomObject *> &obj_vec, int start, int end, int axis) {
 
+
         typedef bool(*cmpFunc)(GeomObject *a, GeomObject *b);
         cmpFunc cmpFuncs[3] = {cmpXaxis, cmpYaxis, cmpZaxis};
 
 
-        std::sort(obj_vec.begin() + start, obj_vec.end() + end, cmpFuncs[axis]);
+        std::sort(obj_vec.begin() + start, obj_vec.begin() + end, cmpFuncs[axis]);
 
         int mid = (start + end) / 2;
 

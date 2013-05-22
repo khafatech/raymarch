@@ -42,6 +42,9 @@ vector<BaseObject*> theObjects;
 vector<BaseObject*> g_lights;
 vector<GeomObject*> g_geom;
 
+BVHNode *g_obj_tree;
+
+
 Camera *g_camera;
 
 
@@ -428,7 +431,13 @@ int main(int argc, char* argv[]) {
 
     g_camera->setImageDimention(g_image_width, g_image_height);
 
+    cout << "g_geom size: " << g_geom.size() << endl;
 
+    g_obj_tree = new BVHNode(g_geom, 0, (int) g_geom.size(), 0);
+
+    
+
+    /*
     // the main thing
     cast_rays();
 
@@ -439,6 +448,7 @@ int main(int argc, char* argv[]) {
     string outfile_name(fname + ".ppm");
 	write_image(g_image, outfile_name);
 	
+    */
 
     return 0;
 }

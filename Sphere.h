@@ -102,6 +102,16 @@ public:
         in >> radius;
 
         GeomObject::read(in);
+
+        calcBBox();
+    }
+
+    void calcBBox() {
+        // TODO change to world box
+
+        box.center = location;
+        box.corner1 = vec3(-radius);
+        box.corner2 = vec3(radius);
     }
 
     void print_properties() {
