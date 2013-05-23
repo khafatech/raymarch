@@ -20,6 +20,17 @@ using glm::mat4;
 using namespace std;
 
 
+class GeomObject;
+
+// represents an intersection
+struct Hit {
+    Hit(float t, GeomObject *obj) {
+        this->t = t;
+        this->obj = obj;
+    }
+    float t;
+    GeomObject *obj;
+};
 
 
 struct Pigment {
@@ -149,9 +160,9 @@ public:
         finish.print_properties();
     }
 
-    virtual float intersect(const Ray &ray) {
-        // cerr << "hurrr\n";
-        return 0;
+    virtual Hit* intersect(const Ray &ray) {
+        cerr << "hurrr\n";
+        return NULL;
     }
 
     virtual vec3 getNormal(vec3 pos) {

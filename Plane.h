@@ -22,7 +22,6 @@ public:
 
     void read(istream &in) {
 
-        char dummy;
         string property("");
 
         skip_to(in, '{');
@@ -37,7 +36,7 @@ public:
         GeomObject::read(in);
     }
 
-    virtual float intersect(const Ray &world_ray) {
+    virtual Hit* intersect(const Ray &world_ray) {
         /* http://www.siggraph.org/education/materials/HyperGraph/raytrace/rayplane_intersection.htm
            t = -(N . P0 -D)/ (N . d)
         */
@@ -58,7 +57,7 @@ public:
 
         float t = npd / nd;
 
-        return t;
+        return new Hit(t, this);
     }
 
     vec3 getNormal(vec3 pos_world) {

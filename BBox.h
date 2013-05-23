@@ -78,7 +78,19 @@ public:
             }
         }
 
-        return 1;
+        return get_least_positive(t0, t2);
+    }
+
+    float get_least_positive(t1, t2) {
+        if (t1 > 0 && t2 > 0) {
+            min(t1, t2);
+        } else if (t1 > 0) {
+            return t1;
+        } else if (t2 > 0) {
+            return t2;
+        } else {
+            return 0;
+        }
     }
 
     BBox operator+(const BBox &other) const {

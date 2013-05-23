@@ -27,7 +27,7 @@ public:
     }
 
 
-    float intersect(const Ray &world_ray) {
+    Hit* intersect(const Ray &world_ray) {
 
         /*
         cout << "ray:\n";
@@ -50,28 +50,25 @@ public:
 
 
         if (delta >= 0) {
-            dprint("delta > 0\n");
-            
             sqrt_delta = sqrt(delta);
             t1 = (-dot(ray.d, e_min_c) + sqrt_delta) / dd;
             t2 = (-dot(ray.d, e_min_c) - sqrt_delta) / dd;
 
 
             // return leaset positive t
-            if (t1 < 0) {
-                return t2;
+            if (t1 > 0 && t2 > 0) {
+                return new Hit(min(t1, t2), this);
+            } else if (t1 > 0) {
+                return new Hit(t1, this);
+            } else if (t2 > 0) {
+                return new Hit(t2, this);
+            } else {
+                return NULL;
             }
-
-            if (t2 < 0) {
-                return t1;
-            }
-                
-            
-            return MIN(t1, t2);
 
         } else {
             // no intersection
-            return 0;
+            return NULL;
         }
     }
 
@@ -89,7 +86,6 @@ public:
 
     void read(istream &in) {
 
-        char dummy;
         string property("");
 
         skip_to(in, '{');
@@ -110,8 +106,8 @@ public:
         // TODO change to world box
 
         box.center = location;
-        box.corner1 = vec3(-radius);
-        box.corner2 = vec3(radius);
+        box.corner1 = vec3(-radius) + location;
+        box.corner2 = vec3(radius) + location;
     }
 
     void print_properties() {

@@ -4,8 +4,8 @@
 
 #include "GeomObj.h"
 #include "BBox.h"
-
 #include "Sphere.h"
+#include "Ray.h"
 
 
 
@@ -15,6 +15,8 @@
 
 #include <iostream>
 using namespace std;
+
+
 
 
 using std::vector;
@@ -45,12 +47,6 @@ struct BVHNode : GeomObject {
     }
 
 
-    /*
-    TODO
-    BVHNode(vector<GeomObject *> &obj_vec, int start, int end, int axis) {
-        
-    }
-    */
 
     void print_tabs(int depth) {
         while (depth--) {
@@ -77,18 +73,102 @@ struct BVHNode : GeomObject {
             cout << "sphere. r: " << sphere->radius << ", ";
             print3f(sphere->location, "pos");
         } else if ((bvhNode = dynamic_cast<BVHNode *>(node))) {
+
+            // === print box ===
             print_tabs(depth);
-            cout << "left: " << bvhNode->left <<endl;
+            cout << "*box:\n";
+            
+            print_tabs(depth+2);
+            print3f(bvhNode->box.corner1, "min");
+
+            print_tabs(depth+2);
+            print3f(bvhNode->box.corner2, "max");
+            // === end print box ===
+
+            print_tabs(depth);
+            cout << "*left: " <<endl;
             print(bvhNode->left, depth+1);
 
             print_tabs(depth);
-            cout << "right: " << bvhNode->right <<endl;
+            cout << "*right: " <<endl;
             print(bvhNode->right, depth+1);
         }
 
     }
 
+
+    Hit* intersect(const Ray &ray) {
+        return intersect(this, ray);
+    }
+
+    Hit* intersect(GeomObject* node, const Ray &ray) {
+        Hit* leftHit = NULL;
+        Hit* rightHit = NULL;
+
+        Hit* retHit = NULL;
+
+        if (node == NULL) {
+            return NULL;
+        }
+
+        if (node->box.intersect(ray) <= 0) {
+            return NULL;
+        }
+
+        BVHNode *bvhNode;
+
+        if ((bvhNode = dynamic_cast<BVHNode *>(node))) {
+
+            if (bvhNode->left != NULL) {
+                leftHit = bvhNode->left->intersect(ray);
+            }
+            if (bvhNode->right != NULL) {
+                rightHit = bvhNode->right->intersect(ray);
+            }
+
+            if (leftHit && rightHit) {
+                // ret smallest
+                
+                if (leftHit->t < rightHit->t) {
+                    retHit = leftHit;
+                } else {
+                    retHit = rightHit;
+                }
+
+            } else if (leftHit) {
+                retHit = leftHit;
+            } else if (rightHit) {
+                retHit = rightHit;
+            } else {
+                retHit = NULL;
+            }
+        } else {
+            retHit = node->intersect(ray);
+        }
+
+        // clean up
+        /*
+        if (leftHit && (leftHit != retHit)) {
+            delete leftHit;
+        }
+        if (rightHit && (rightHit != retHit)) {
+            delete rightHit;
+        }
+        */
+
+        return retHit;
+    }
+
+    BVHNode(vector<GeomObject *> &obj_vec) {
+        newBVHNode(obj_vec, 0, (int) obj_vec.size(), 0);
+    }
+
     BVHNode(vector<GeomObject *> &obj_vec, int start, int end, int axis) {
+        newBVHNode(obj_vec, start, end, axis);
+    }
+
+protected:
+    void newBVHNode(vector<GeomObject *> &obj_vec, int start, int end, int axis) {
         int num_geom = end - start;
 
         // cout << "\n** BVHNode: start: " << start << " end: " << end << endl;
@@ -103,7 +183,6 @@ struct BVHNode : GeomObject {
             left = obj_vec[start+1];
 
             box = right->box + left->box;
-            
         } else if (num_geom == 0) {
             right = NULL;
             left = NULL;
@@ -134,11 +213,8 @@ struct BVHNode : GeomObject {
         return mid;
     }
 
-
     GeomObject *left;
     GeomObject *right;
-
-    BBox box;
 };
 
 

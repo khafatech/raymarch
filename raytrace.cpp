@@ -127,31 +127,16 @@ void parse_pov(const string fname) {
 }
 
 
-// represents an intersection
-struct Hit {
-    Hit(float t, GeomObject *obj) {
-        this->t = t;
-        this->obj = obj;
-    }
-    float t;
-    GeomObject *obj;
-};
 
 
 
-Hit* find_closest_hit(vector<Hit*> &hits) {
-    if (hits.empty()) {
-        return NULL;
-    }
+Hit* find_closest_hit(const Ray &ray) {
 
-    int smallestIndex = 0;
-    
-    for (int i=0; i < hits.size(); i++) {
-        if (hits[i]->t < hits[smallestIndex]->t) {
-            smallestIndex = i;
-        }
-    }
-    return hits[smallestIndex];
+    Hit * non_plane_hit = g_obj_tree->intersect(ray);
+
+    // TODO - test for planes
+
+    return non_plane_hit;
 }
 
 
@@ -162,15 +147,21 @@ bool blocked_light(vec3 pos, LightSource *light) {
 	ray.d = light->location - pos;
 	ray.p0 = pos;
     
-    float t;
+
+    // TODO
 	
-	for (int i=0; i < g_geom.size(); i++) {
+    /*
+    // non bvh
+    float t;
+	for (unsigned int i=0; i < g_geom.size(); i++) {
         t = g_geom[i]->intersect(ray);
         // if between light and intersect pt.
         if (t > 1.00001 && t < 1.0) {
             return true;
         }
-	}
+	} */
+
+
 	return false;
 }
 
@@ -302,76 +293,89 @@ bool refract_ray(const Ray &ray, const vec3 &pos, const vec3 N, Ray &t, float n_
 }
 
 
-vec3 cast_ray(Ray &ray, int recursion_depth=6) {
+vec3 cast_ray(Ray &ray, int recursion_depth=1) {
     Hit closest_hit(-1, NULL);
+
+    Hit *hit;
 
     // for lighting
     vec3 N;
     LightSource *light;
     vec3 pos;
-    float t;
     
     Ray reflected_ray;
 
+    vec3 final_color(0.0);
+
 
     // intersect ray with geometry
-    for (int i=0; i < g_geom.size(); i++) {
+
+    hit = find_closest_hit(ray);
+
+    if (hit) {
+        // cout << "hit\n";
+        closest_hit.t = hit->t;
+        closest_hit.obj = hit->obj;
+        delete hit;
+    } else {
+        return final_color;
+    }
+
+    /*
+    // non bvh
+    for (unsigned int i=0; i < g_geom.size(); i++) {
         t = g_geom[i]->intersect(ray);
         if (t > 0 && (closest_hit.obj == NULL || t < closest_hit.t)) {
             closest_hit.t = t;
             closest_hit.obj = g_geom[i];
         }
     }
+    */
 
 
-    vec3 final_color(0.0);
     Ray T;
 
-    if (closest_hit.obj) {
-        pos = ray.d * vec3(closest_hit.t) + ray.p0;
-        N = closest_hit.obj->getNormal(pos);
-        light = (LightSource *) g_lights[0]; // FIXME
+    // ray trace!
+    pos = ray.d * vec3(closest_hit.t) + ray.p0;
+    N = closest_hit.obj->getNormal(pos);
+    light = (LightSource *) g_lights[0]; // FIXME
 
-        if (recursion_depth <= 1 ) {
-            final_color = calcLighting(closest_hit.obj, N, pos, light);
-        } else {
+    if (recursion_depth <= 1 ) {
+        final_color = calcLighting(closest_hit.obj, N, pos, light);
+    } else {
 
-            // refract
-            if (closest_hit.obj->finish.refraction > 0) {
-                float d_dot_n = dot(ray.d, N);
-                if (d_dot_n < 0) {
-                    // out of obj
-                    refract_ray(ray, pos, N, T, 1/closest_hit.obj->finish.ior);
-                    final_color = cast_ray(T, recursion_depth-1) *
-                        (closest_hit.obj->finish.refraction);
+        // refract
+        if (closest_hit.obj->finish.refraction > 0) {
+            float d_dot_n = dot(ray.d, N);
+            if (d_dot_n < 0) {
+                // out of obj
+                refract_ray(ray, pos, N, T, 1/closest_hit.obj->finish.ior);
+                final_color = cast_ray(T, recursion_depth-1) *
+                    (closest_hit.obj->finish.refraction);
+            } else {
+                // in obj0
+                if (refract_ray(ray, pos, -N, T, closest_hit.obj->finish.ior/1)) {
+                    // not total internal reflect
+                    return cast_ray(T, recursion_depth-1) *
+                           (closest_hit.obj->finish.refraction);
                 } else {
-                    // in obj0
-                    if (refract_ray(ray, pos, -N, T, closest_hit.obj->finish.ior/1)) {
-                        // not total internal reflect
-                        return cast_ray(T, recursion_depth-1) *
-                               (closest_hit.obj->finish.refraction);
-                    } else {
-                        return vec3(0);
-                    }
+                    return vec3(0);
                 }
             }
-
-            // reflection
-            if (closest_hit.obj->finish.reflection > 0) {
-                reflect_ray(ray, N, pos);
-                add_epsilon(ray);
-                final_color += closest_hit.obj->finish.reflection
-                                  * cast_ray(ray, recursion_depth-1);
-            }
-
-            final_color += (1.0f - closest_hit.obj->finish.reflection -
-                                closest_hit.obj->pigment.color.w )
-                           * calcLighting(closest_hit.obj, N, pos, light);
-            
         }
-    } else {
-        // background
-        final_color = vec3(0);
+
+        // reflection
+        if (closest_hit.obj->finish.reflection > 0) {
+            reflect_ray(ray, N, pos);
+            add_epsilon(ray);
+            final_color += closest_hit.obj->finish.reflection
+                              * cast_ray(ray, recursion_depth-1);
+        }
+
+        final_color += (1.0f - closest_hit.obj->finish.reflection -
+                            closest_hit.obj->pigment.color.w )
+                       * calcLighting(closest_hit.obj, N, pos, light);
+        
     }
 
     return final_color;
@@ -419,10 +423,12 @@ int main(int argc, char* argv[]) {
     parse_pov(fname);
 
     // print objects
-    for (int i=0; i<theObjects.size(); i++) {
+    /*
+    for (unsigned int i=0; i<theObjects.size(); i++) {
         cout << endl << endl << theObjects[i]->name << ":\n";
         theObjects[i]->print_properties();
     }
+    */
 
     cout << "w: " << g_image_width << " h: " << g_image_height
          << " fname: " << fname << endl;
@@ -433,13 +439,12 @@ int main(int argc, char* argv[]) {
 
     cout << "g_geom size: " << g_geom.size() << endl;
 
-    g_obj_tree = new BVHNode(g_geom, 0, (int) g_geom.size(), 0);
+    g_obj_tree = new BVHNode(g_geom);
 
 
-    g_obj_tree->print();
+    // g_obj_tree->print();
     
 
-    /*
     // the main thing
     cast_rays();
 
@@ -450,7 +455,6 @@ int main(int argc, char* argv[]) {
     string outfile_name(fname + ".ppm");
 	write_image(g_image, outfile_name);
 	
-    */
 
     return 0;
 }

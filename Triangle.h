@@ -22,7 +22,6 @@ public:
 
     void read(istream &in) {
 
-        char dummy;
         string property("");
         skip_to(in, '{');
 
@@ -51,7 +50,7 @@ public:
         }
     }
 
-    virtual float intersect(const Ray &world_ray) {
+    Hit* intersect(const Ray &world_ray) {
 
         Ray ray;
 
@@ -104,7 +103,6 @@ public:
 
         float A_det = glm::determinant(A);
 
-        // TODO - is this float cmp correct?
         if (A_det == 0) {
             return 0;
         }
@@ -126,7 +124,7 @@ public:
             return 0;
         }
 
-        return t;
+        return new Hit(t, this);
     }
 
     vec3 getNormal(vec3 pos) {

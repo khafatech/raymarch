@@ -8,6 +8,8 @@
 #include "BaseObject.h"
 #include "GeomObj.h"
 
+#include "BBox.h"
+
 using std::string;
 
 
@@ -22,7 +24,6 @@ public:
 
     void read(istream &in) {
 
-        char dummy;
         string property("");
         skip_to(in, '{');
 

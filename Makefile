@@ -2,7 +2,7 @@
 
 CC = g++
 
-CFLAGS = -ggdb -Wall #-O3
+CFLAGS = -Wall -O3 #-pg
 
 LDFLAGS = 
 
@@ -23,14 +23,14 @@ test_intersect:	test_intersect.o util.o
 		$(CC) $(CFLAGS) $^ -o $@ 
 
 
-%.o: %.c $(wildcard %.h)
+%.o: %.cpp $(wildcard %.h)
 		$(CC) $(CFLAGS) $< -c
 
 
 handin:
 		cd .. &&  tar -czf $(TAR) ./raytrace
 		scp ../$(TAR) unix3:~/Desktop
-		ssh unix3 "handin zwood csc473p3 Desktop/$(TAR)"
+		ssh unix3 "handin zwood csc473p4 Desktop/$(TAR)"
 
 upload:
 		cd ..

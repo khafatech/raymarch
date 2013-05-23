@@ -104,7 +104,6 @@ public:
     // parse pov
     void read(istream &in) {
 
-        char dummy;
         string property;
 
         skip_to(in, '{');
