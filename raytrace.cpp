@@ -149,6 +149,14 @@ bool blocked_light(vec3 pos, LightSource *light) {
     
 
     // TODO
+
+    // BVH
+    Hit* hit = find_closest_hit(ray);
+    if (hit) {
+        if (hit->t > 0.00001 && hit->t < 1.0) {
+            return true;
+        }
+    }
 	
     /*
     // non bvh
@@ -381,19 +389,41 @@ vec3 cast_ray(Ray &ray, int recursion_depth=6) {
     return final_color;
 }
 
-void cast_rays() {
+
+// returns in range -1, 1 (not sure if incusive)
+float randFloat() {
+    return ((float) rand() / RAND_MAX);
+}
+
+void cast_rays(int samples_per_pixel) {
     Ray *ray;
-    
+
+    vec3 color = vec3(0.0);
 
     for (int y=0; y < g_image_height; y++) { 
         for (int x=0; x < g_image_width; x++) {
-            // ray = g_camera->genOrthoRay(x, y);
-            ray = g_camera->genRay(x, y);
 
-            g_image[x][y] = cast_ray(*ray);
+            color *= 0.0f;
+            if (samples_per_pixel > 1) {
+                for (int i=0; i < samples_per_pixel; i++) {
 
-            delete ray;
+                    float dx = 0.5 * randFloat();
+                    float dy = 0.5 * randFloat();
 
+                    ray = g_camera->genRay(x+dx, y+dy);
+
+                    color += cast_ray(*ray);
+
+                    delete ray;
+                }
+            } else {
+                ray = g_camera->genRay(x, y);
+                color = cast_ray(*ray);
+                delete ray;
+            }
+
+            // take average
+            g_image[x][y] = (1.0f/samples_per_pixel) * color;
         }
         printf("\r %.3f done", 100 * ((float) y) / g_image_height);
         cout.flush();
@@ -404,8 +434,9 @@ void cast_rays() {
 
 int main(int argc, char* argv[]) {
 
-    if (argc != 4) {
-        cerr << "usage: " << argv[0] << " width height input.pov\n";
+    if (argc < 4) {
+        cerr << "usage: " << argv[0] <<
+            " width height input.pov [samples per pixel]\n";
         exit(1);
     }
 
@@ -421,6 +452,8 @@ int main(int argc, char* argv[]) {
 
     string fname(argv[3]);
     parse_pov(fname);
+    cout << "g_geom size: " << g_geom.size() << endl;
+
 
     // print objects
     /*
@@ -437,18 +470,24 @@ int main(int argc, char* argv[]) {
 
     g_camera->setImageDimention(g_image_width, g_image_height);
 
-    cout << "g_geom size: " << g_geom.size() << endl;
 
     g_obj_tree = new BVHNode(g_geom);
-
-
     // g_obj_tree->print();
     
 
-    // the main thing
-    cast_rays();
 
-    // test
+    // Anti aliasing
+    int samples_per_pixel = 9; // Zoe wants 9
+
+    if (argc > 4) {
+        samples_per_pixel = atoi(argv[4]);
+    }
+    // the main thing
+    cast_rays(samples_per_pixel);
+
+
+
+    // image test
     // draw_circle(g_image_height/3);
 
     // works only with ppm now

@@ -28,12 +28,11 @@ test_intersect:	test_intersect.o util.o
 
 
 handin:
-		cd .. &&  tar -czf $(TAR) ./raytrace
+		tar -czf ../$(TAR) ../raytrace
 		scp ../$(TAR) unix3:~/Desktop
 		ssh unix3 "handin zwood csc473p4 Desktop/$(TAR)"
 
 upload:
-		cd ..
-		tar -czf $(TAR) ./raytrace
-		scp $(TAR) unix3:~/Desktop
+		tar -czf ../$(TAR) ../raytrace
+		scp ../$(TAR) unix3:~/Desktop
 

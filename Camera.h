@@ -45,7 +45,7 @@ public:
 
     // input: image x and y
     // returns ray in world coords
-    Ray* genRay(int x, int y) {
+    Ray* genRay(float x, float y) {
         Ray *ray = new Ray();
 
 
