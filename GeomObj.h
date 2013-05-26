@@ -172,7 +172,6 @@ public:
 
 
 protected:
-#define vec4_to_vec3(v4) vec3(v4.x, v4.y, v4.z)
 
     vec3 transformv3(vec3 v, mat4 mat) {
         vec3 result;

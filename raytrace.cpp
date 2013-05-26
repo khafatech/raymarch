@@ -293,7 +293,7 @@ bool refract_ray(const Ray &ray, const vec3 &pos, const vec3 N, Ray &t, float n_
 }
 
 
-vec3 cast_ray(Ray &ray, int recursion_depth=1) {
+vec3 cast_ray(Ray &ray, int recursion_depth=6) {
     Hit closest_hit(-1, NULL);
 
     Hit *hit;

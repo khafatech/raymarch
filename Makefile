@@ -2,7 +2,7 @@
 
 CC = g++
 
-CFLAGS = -Wall -O3 #-pg
+CFLAGS = -Wall -O3 #-pg -g
 
 LDFLAGS = 
 

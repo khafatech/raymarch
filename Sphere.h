@@ -103,11 +103,51 @@ public:
     }
 
     void calcBBox() {
-        // TODO change to world box
 
+        // obj bbox
         box.center = location;
         box.corner1 = vec3(-radius) + location;
         box.corner2 = vec3(radius) + location;
+
+
+        // TODO - put in function
+        vector<vec4> box_points;
+        mat4 xmat = glm::inverse(xmat_i);
+        box.get_points(box_points);
+
+        // transform points to world
+        for (int i=0; i < (int) box_points.size(); i++) {
+            box_points[i] = xmat * box_points[i];
+        }
+
+        // find new box that fits transformed box
+        vec3 min = vec4_to_vec3(box_points[0]);
+        vec3 max = vec4_to_vec3(box_points[1]);
+        for (int i=0; i < (int) box_points.size(); i++) {
+            if (box_points[i].x < min.x) {
+                min.x = box_points[i].x;
+            }
+            if (box_points[i].y < min.y) {
+                min.y = box_points[i].y;
+            }
+            if (box_points[i].z < min.z) {
+                min.z = box_points[i].z;
+            }
+
+            if (box_points[i].x > max.x) {
+                max.x = box_points[i].x;
+            }
+            if (box_points[i].y > max.y) {
+                max.y = box_points[i].y;
+            }
+            if (box_points[i].z > max.z) {
+                max.z = box_points[i].z;
+            }
+        }
+
+        box.corner1 = min;
+        box.corner2 = max;
+        box.calcCenter();
     }
 
     void print_properties() {

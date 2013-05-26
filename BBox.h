@@ -6,8 +6,12 @@
 #include "util.h"
 #include "Ray.h"
 
+#include <vector>
+
 using std::string;
+using std::vector;
 using glm::vec3;
+using glm::vec4;
 
 
 class BBox {
@@ -78,19 +82,18 @@ public:
             }
         }
 
-        return get_least_positive(t0, t2);
+        return get_least_positive(t0, t1);
     }
 
-    float get_least_positive(t1, t2) {
+    float get_least_positive(float t1, float t2) {
         if (t1 > 0 && t2 > 0) {
             min(t1, t2);
         } else if (t1 > 0) {
             return t1;
         } else if (t2 > 0) {
             return t2;
-        } else {
-            return 0;
-        }
+        } 
+        return 1;
     }
 
     BBox operator+(const BBox &other) const {
@@ -108,6 +111,17 @@ public:
         result.calcCenter();
 
         return result;
+    }
+
+    void get_points(vector<vec4> &points) {
+        points.push_back(vec4(corner1.x, corner1.y, corner1.z, 1));
+        points.push_back(vec4(corner2.x, corner2.y, corner2.z, 1));
+        points.push_back(vec4(corner1.x, corner2.y, corner1.z, 1));
+        points.push_back(vec4(corner1.x, corner2.y, corner2.z, 1));
+        points.push_back(vec4(corner2.x, corner2.y, corner1.z, 1));
+        points.push_back(vec4(corner2.x, corner1.y, corner1.z, 1));
+        points.push_back(vec4(corner2.x, corner1.y, corner2.z, 1));
+        points.push_back(vec4(corner1.x, corner1.y, corner2.z, 1));
     }
 
     vec3 corner1; // min

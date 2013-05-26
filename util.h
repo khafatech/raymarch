@@ -23,6 +23,7 @@ float min(float a, float b);
 #define print4f(v, name) \
         printf("%s: %f %f %f %f\n", name, v.x, v.y, v.z, v.w);
 
+#define vec4_to_vec3(v4) vec3(v4.x, v4.y, v4.z)
 
 #define POWER2(x) ((x) * (x))
 
