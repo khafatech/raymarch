@@ -39,7 +39,7 @@ Image g_image;
 
 
 vector<BaseObject*> theObjects;
-vector<BaseObject*> g_lights;
+vector<LightSource*> g_lights;
 vector<GeomObject*> g_geom;
 
 BVHNode *g_obj_tree;
@@ -100,7 +100,7 @@ void parse_pov(const string fname) {
             read_obj = g_camera;
         } else if (word == "light_source") {
             read_obj = new LightSource();
-            g_lights.push_back(read_obj);
+            g_lights.push_back((LightSource*) read_obj);
         } else if (word == "box") {
             read_obj = new Box();
         } else if (word == "plane") {
@@ -148,8 +148,6 @@ bool blocked_light(vec3 pos, LightSource *light) {
 	ray.p0 = pos;
     
 
-    // TODO
-
     // BVH
     Hit* hit = find_closest_hit(ray);
     if (hit) {
@@ -187,11 +185,6 @@ vec3 calcLightingGaussian(GeomObject *obj, vec3 N, vec3 pos, LightSource *light)
     
     vec3 pigment3 = vec3(obj->pigment.color.x,
             obj->pigment.color.y, obj->pigment.color.z);
-    
-    if (blocked_light(pos, light)) {
-        // shadow
-        return vec3(0) + obj->finish.ambient; // this is temporary FIXME
-    }
 
     L = glm::normalize(light->location - pos);
     NL = MAX(dot(N, L), 0);
@@ -214,7 +207,7 @@ vec3 calcLightingGaussian(GeomObject *obj, vec3 N, vec3 pos, LightSource *light)
 
     color = light->color *
             (vec3(specular) * vec3(obj->finish.specular) +
-            vec3(NL) * pigment3) + obj->finish.ambient;
+            vec3(NL) * pigment3);
 
     return color;
 }
@@ -232,10 +225,6 @@ vec3 calcLightingPhong(GeomObject *obj, vec3 N, vec3 pos, LightSource *light) {
     vec3 pigment3 = vec3(obj->pigment.color.x,
             obj->pigment.color.y, obj->pigment.color.z);
     
-    if (blocked_light(pos, light)) {
-        // shadow
-        return vec3(0) + obj->finish.ambient; // this is temporary FIXME
-    }
 
     L = glm::normalize(light->location - pos);
     NL = MAX(dot(N, L), 0);
@@ -260,10 +249,30 @@ vec3 calcLightingPhong(GeomObject *obj, vec3 N, vec3 pos, LightSource *light) {
 	
     color = light->color
             * vec3(specular) * vec3(obj->finish.specular)
-            + vec3(NL) * pigment3 + obj->finish.ambient;
+            + vec3(NL) * pigment3  ;
 
     return color;
 }
+
+vec3 calcLighting_all(GeomObject *obj, vec3 N, vec3 pos) {
+
+    vec3 color = vec3(0.0f);
+
+    vec3 pigment3 = vec3(obj->pigment.color.x,
+            obj->pigment.color.y, obj->pigment.color.z);
+
+    color = obj->finish.ambient * pigment3;
+
+    for (int i=0; i < (int) g_lights.size(); i++) {
+        // FIXME - enable shadows and fix
+        //if (!blocked_light(pos, g_lights[i])) {
+            color += calcLighting(obj, N, pos, g_lights[i]);
+        //}
+    }
+    
+    return color;
+}
+
 
 
 void add_epsilon(Ray &ray) {
@@ -308,7 +317,6 @@ vec3 cast_ray(Ray &ray, int recursion_depth=6) {
 
     // for lighting
     vec3 N;
-    LightSource *light;
     vec3 pos;
     
     Ray reflected_ray;
@@ -346,10 +354,9 @@ vec3 cast_ray(Ray &ray, int recursion_depth=6) {
     // ray trace!
     pos = ray.d * vec3(closest_hit.t) + ray.p0;
     N = closest_hit.obj->getNormal(pos);
-    light = (LightSource *) g_lights[0]; // FIXME
 
     if (recursion_depth <= 1 ) {
-        final_color = calcLighting(closest_hit.obj, N, pos, light);
+        final_color = calcLighting_all(closest_hit.obj, N, pos);
     } else {
 
         // refract
@@ -382,7 +389,7 @@ vec3 cast_ray(Ray &ray, int recursion_depth=6) {
 
         final_color += (1.0f - closest_hit.obj->finish.reflection -
                             closest_hit.obj->pigment.color.w )
-                       * calcLighting(closest_hit.obj, N, pos, light);
+                       * calcLighting_all(closest_hit.obj, N, pos);
         
     }
 

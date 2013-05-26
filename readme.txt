@@ -19,10 +19,11 @@ Part 4
 
 Run times for:
 
-800x600 gnarly.pov: 3 seconds   (6 level recursion, shadows off, AA off)
-800x600 balls2.pov: 5 seconds   (6 level recursion, shadows off, AA off)
+800x600 gnarly.pov: 3 seconds   (first light, 6 level recursion, shadows off, AA off)
+640x480 gnarly.pov: 15 seconds   (all lights, 6 level recursion, shadows off, 9xAA)
 
-640x480 balls2.pov: 27 seconds with 9
+800x600 balls2.pov: 5 seconds   (first light, 6 level recursion, shadows off, AA off)
+640x480 balls2.pov: 27 seconds (3 lights, 6 level recursion, shadows off, 9xAA)
 
 
 machine: 64 bit, 2.4GHz core 2 duo
