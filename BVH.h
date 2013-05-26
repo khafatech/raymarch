@@ -79,10 +79,10 @@ struct BVHNode : GeomObject {
             cout << "*box:\n";
             
             print_tabs(depth+2);
-            print3f(bvhNode->box.corner1, "min");
+            print3f(bvhNode->box.min, "min");
 
             print_tabs(depth+2);
-            print3f(bvhNode->box.corner2, "max");
+            print3f(bvhNode->box.max, "max");
             // === end print box ===
 
             print_tabs(depth);

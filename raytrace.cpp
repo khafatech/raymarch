@@ -235,7 +235,7 @@ vec3 calcLightingPhong(GeomObject *obj, vec3 N, vec3 pos, LightSource *light) {
 
     // specular
     if (NL > 0) {
-        specular = pow(max(dot(V, vec3(2.0) * NL * N - L), 0), smoothness);
+        specular = pow(Max(dot(V, vec3(2.0) * NL * N - L), 0), smoothness);
     } else {
         specular = 0;
     }

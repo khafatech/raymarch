@@ -19,18 +19,18 @@ class BBox {
 public:
 
     BBox() {
-        corner1 = vec3(0.0);
-        corner2 = vec3(0.0);
+        min = vec3(0.0);
+        max = vec3(0.0);
     }
 
     BBox(vec3 min, vec3 max) {
-        this->corner1 = min;
-        this->corner2 = max;
+        this->min = min;
+        this->max = max;
         calcCenter();
     }
 
     void calcCenter() {
-        center = vec3(0.5) * (corner1 + corner2);
+        center = vec3(0.5) * (min + max);
     }
 
     void read(istream &in) {
@@ -40,26 +40,23 @@ public:
         string property("");
         skip_to(in, '{');
 
-        read_vec3(in, corner1);
+        read_vec3(in, min);
 
         skip_to(in, ',');
 
-        read_vec3(in, corner2);
+        read_vec3(in, max);
 
         GeomObject::read(in);
         */
     }
 
     void print_properties() {
-        print3f(corner1, "corner1");
-        print3f(corner2, "corner2");
+        print3f(min, "min");
+        print3f(max, "max");
     }
 
     float intersect(const Ray &world_ray) {
 
-        vec3 min = corner1;
-        vec3 max = corner2;
-        
         float t0=0.0f;
         float t1=1.0/0.0f;
 
@@ -87,12 +84,13 @@ public:
 
     float get_least_positive(float t1, float t2) {
         if (t1 > 0 && t2 > 0) {
-            min(t1, t2);
+            Min(t1, t2);
         } else if (t1 > 0) {
             return t1;
         } else if (t2 > 0) {
             return t2;
         } 
+        // FIXME - doesn't return the real t
         return 1;
     }
 
@@ -100,13 +98,13 @@ public:
 
         BBox result;
 
-        result.corner1.x = min(corner1.x, other.corner1.x);
-        result.corner1.y = min(corner1.y, other.corner1.y);
-        result.corner1.z = min(corner1.z, other.corner1.z);
+        result.min.x = Min(min.x, other.min.x);
+        result.min.y = Min(min.y, other.min.y);
+        result.min.z = Min(min.z, other.min.z);
 
-        result.corner2.x = max(corner2.x, other.corner2.x);
-        result.corner2.y = max(corner2.y, other.corner2.y);
-        result.corner2.z = max(corner2.z, other.corner2.z);
+        result.max.x = Max(max.x, other.max.x);
+        result.max.y = Max(max.y, other.max.y);
+        result.max.z = Max(max.z, other.max.z);
 
         result.calcCenter();
 
@@ -114,18 +112,19 @@ public:
     }
 
     void get_points(vector<vec4> &points) {
-        points.push_back(vec4(corner1.x, corner1.y, corner1.z, 1));
-        points.push_back(vec4(corner2.x, corner2.y, corner2.z, 1));
-        points.push_back(vec4(corner1.x, corner2.y, corner1.z, 1));
-        points.push_back(vec4(corner1.x, corner2.y, corner2.z, 1));
-        points.push_back(vec4(corner2.x, corner2.y, corner1.z, 1));
-        points.push_back(vec4(corner2.x, corner1.y, corner1.z, 1));
-        points.push_back(vec4(corner2.x, corner1.y, corner2.z, 1));
-        points.push_back(vec4(corner1.x, corner1.y, corner2.z, 1));
+        points.push_back(vec4(min.x, min.y, min.z, 1));
+        points.push_back(vec4(max.x, max.y, max.z, 1));
+        points.push_back(vec4(min.x, max.y, min.z, 1));
+        points.push_back(vec4(min.x, max.y, max.z, 1));
+        points.push_back(vec4(max.x, max.y, min.z, 1));
+        points.push_back(vec4(max.x, min.y, min.z, 1));
+        points.push_back(vec4(max.x, min.y, max.z, 1));
+        points.push_back(vec4(min.x, min.y, max.z, 1));
     }
+
     
     // transforms points and creates a new Axis-aligned BBox
-    void transform_to_world(mat4 xmat_i) {
+    void transform_to_world(const mat4 xmat_i) {
         vector<vec4> box_points;
         mat4 xmat = glm::inverse(xmat_i);
 
@@ -136,38 +135,41 @@ public:
             box_points[i] = xmat * box_points[i];
         }
 
+        boundPoints(box_points);
+    }
+
+    void boundPoints(const vector<vec4> &points) {
+
         // find new box that fits transformed box
-        vec3 min = vec4_to_vec3(box_points[0]);
-        vec3 max = vec4_to_vec3(box_points[1]);
-        for (int i=0; i < (int) box_points.size(); i++) {
-            if (box_points[i].x < min.x) {
-                min.x = box_points[i].x;
+        min = vec4_to_vec3(points[0]);
+        max = vec4_to_vec3(points[1]);
+        for (int i=0; i < (int) points.size(); i++) {
+            if (points[i].x < min.x) {
+                min.x = points[i].x;
             }
-            if (box_points[i].y < min.y) {
-                min.y = box_points[i].y;
+            if (points[i].y < min.y) {
+                min.y = points[i].y;
             }
-            if (box_points[i].z < min.z) {
-                min.z = box_points[i].z;
+            if (points[i].z < min.z) {
+                min.z = points[i].z;
             }
 
-            if (box_points[i].x > max.x) {
-                max.x = box_points[i].x;
+            if (points[i].x > max.x) {
+                max.x = points[i].x;
             }
-            if (box_points[i].y > max.y) {
-                max.y = box_points[i].y;
+            if (points[i].y > max.y) {
+                max.y = points[i].y;
             }
-            if (box_points[i].z > max.z) {
-                max.z = box_points[i].z;
+            if (points[i].z > max.z) {
+                max.z = points[i].z;
             }
         }
 
-        corner1 = min;
-        corner2 = max;
         calcCenter();
     }
 
-    vec3 corner1; // min
-    vec3 corner2; // max
+    vec3 min; // min
+    vec3 max; // max
     vec3 center;
 };
 

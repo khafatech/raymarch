@@ -6,7 +6,7 @@
 #include "util.h"
 
 
-float max(float a, float b) {
+float Max(float a, float b) {
     if (a > b) {
         return a;
     } else {
@@ -14,7 +14,7 @@ float max(float a, float b) {
     }
 }
 
-float min(float a, float b) {
+float Min(float a, float b) {
     if (a < b) {
         return a;
     } else {

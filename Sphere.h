@@ -57,7 +57,7 @@ public:
 
             // return leaset positive t
             if (t1 > 0 && t2 > 0) {
-                return new Hit(min(t1, t2), this);
+                return new Hit(Min(t1, t2), this);
             } else if (t1 > 0) {
                 return new Hit(t1, this);
             } else if (t2 > 0) {
@@ -106,11 +106,9 @@ public:
 
         // obj bbox
         box.center = location;
-        box.corner1 = vec3(-radius) + location;
-        box.corner2 = vec3(radius) + location;
+        box.min = vec3(-radius) + location;
+        box.max = vec3(radius) + location;
 
-
-        // TODO - put in function
         box.transform_to_world(xmat_i);
     }
 

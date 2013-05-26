@@ -32,6 +32,8 @@ public:
         read_vec3(in, c3);
 
         GeomObject::read(in);
+
+        calcBBox();
     }
 
     void print_properties() {
@@ -129,6 +131,23 @@ public:
 
     vec3 getNormal(vec3 pos) {
         return glm::normalize(glm::cross(c2-c1, c3-c1));
+    }
+
+    void calcBBox() {
+        vector<vec4> triangle_points;
+
+        triangle_points.push_back(vec3_to_vec4(c1, 1.0));
+        triangle_points.push_back(vec3_to_vec4(c2, 1.0));
+        triangle_points.push_back(vec3_to_vec4(c3, 1.0));
+
+        // transform points to world
+        mat4 xmat = glm::inverse(xmat_i);
+        for (int i=0; i < (int) triangle_points.size(); i++) {
+            triangle_points[i] = xmat * triangle_points[i];
+        }
+
+        // find box to bound world points
+        box.boundPoints(triangle_points);
     }
 
     vec3 c1;
