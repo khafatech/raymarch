@@ -41,6 +41,7 @@ Image g_image;
 vector<BaseObject*> theObjects;
 vector<LightSource*> g_lights;
 vector<GeomObject*> g_geom;
+vector<Plane*> g_planes;
 
 BVHNode *g_obj_tree;
 
@@ -105,6 +106,7 @@ void parse_pov(const string fname) {
             read_obj = new Box();
         } else if (word == "plane") {
             read_obj = new Plane();
+            g_planes.push_back((Plane*) read_obj);
         } else if (word == "triangle") {
             read_obj = new Triangle();
         } else if (word == "sphere") {
@@ -132,11 +134,31 @@ void parse_pov(const string fname) {
 
 Hit* find_closest_hit(const Ray &ray) {
 
-    Hit * non_plane_hit = g_obj_tree->intersect(ray);
+    Hit *non_plane_hit = g_obj_tree->intersect(ray);
 
-    // TODO - test for planes
+    Hit *plane_hit;
 
-    return non_plane_hit;
+    Hit *smallest = non_plane_hit;
+
+    for (unsigned int i=0; i < g_planes.size(); i++) {
+        plane_hit = g_planes[i]->intersect(ray);
+
+        if (plane_hit && plane_hit->t > 0) {
+
+            if (smallest != NULL) {
+                if (plane_hit->t < smallest->t) {
+                    smallest = plane_hit;
+                }
+            } else {
+                smallest = plane_hit;
+            }
+
+        } else if (plane_hit != NULL) {
+            delete plane_hit;
+        }
+    }
+
+    return smallest;
 }
 
 
@@ -306,6 +328,8 @@ bool refract_ray(const Ray &ray, const vec3 &pos, const vec3 N, Ray &t, float n_
 
     add_epsilon(t);
 
+    // print3f( t.d, "refracted ray dir");
+
     return true;
 }
 
@@ -347,13 +371,19 @@ vec3 cast_ray(Ray &ray, int recursion_depth=6) {
         }
     }
     */
-
+ 
 
     Ray T;
 
     // ray trace!
     pos = ray.d * vec3(closest_hit.t) + ray.p0;
     N = closest_hit.obj->getNormal(pos);
+
+    /*
+    // debug
+    cout << "n: " << recursion_depth << endl;
+    print3f(pos, "intersec point");
+    */
 
     if (recursion_depth <= 1 ) {
         final_color = calcLighting_all(closest_hit.obj, N, pos);
@@ -364,6 +394,8 @@ vec3 cast_ray(Ray &ray, int recursion_depth=6) {
             float d_dot_n = dot(ray.d, N);
             if (d_dot_n < 0) {
                 // out of obj
+                // debug
+                // cout << "refract: out of obj\n";
                 refract_ray(ray, pos, N, T, 1/closest_hit.obj->finish.ior);
                 final_color = cast_ray(T, recursion_depth-1) *
                     (closest_hit.obj->finish.refraction);
@@ -371,9 +403,13 @@ vec3 cast_ray(Ray &ray, int recursion_depth=6) {
                 // in obj0
                 if (refract_ray(ray, pos, -N, T, closest_hit.obj->finish.ior/1)) {
                     // not total internal reflect
+                    // debug
+                    // cout << "refract: in of obj\n";
                     return cast_ray(T, recursion_depth-1) *
                            (closest_hit.obj->finish.refraction);
                 } else {
+                    // debug
+                    // cout << "refract: in of obj, TIR\n";
                     return vec3(0);
                 }
             }
@@ -383,6 +419,10 @@ vec3 cast_ray(Ray &ray, int recursion_depth=6) {
         if (closest_hit.obj->finish.reflection > 0) {
             reflect_ray(ray, N, pos);
             add_epsilon(ray);
+            /*
+            cout << "n: " << recursion_depth << ", ";
+            print3f(ray.d, "reflected ray dir");
+            */
             final_color += closest_hit.obj->finish.reflection
                               * cast_ray(ray, recursion_depth-1);
         }
@@ -439,6 +479,26 @@ void cast_rays(int samples_per_pixel) {
     cout << endl;
 }
 
+void cast_one_ray(int x, int y) {
+    Ray *ray = g_camera->genRay(x, y);
+
+    print3f(ray->d, "ray dir");
+
+    vec3 color = cast_ray(*ray);
+
+    print3f(color, "color");
+}
+
+
+void filter_out_planes(vector<GeomObject*> &objs, vector<GeomObject*> &noplanes) {
+    for (unsigned int i=0; i < objs.size(); i++) {
+        if (!dynamic_cast<Plane*>(objs[i])) {
+            noplanes.push_back(objs[i]);
+        }
+    }
+}
+
+
 int main(int argc, char* argv[]) {
 
     if (argc < 4) {
@@ -478,7 +538,10 @@ int main(int argc, char* argv[]) {
     g_camera->setImageDimention(g_image_width, g_image_height);
 
 
-    g_obj_tree = new BVHNode(g_geom);
+    vector<GeomObject*> geom_noplanes;
+    filter_out_planes(g_geom, geom_noplanes);
+
+    g_obj_tree = new BVHNode(geom_noplanes);
     // g_obj_tree->print();
     
 
@@ -489,9 +552,10 @@ int main(int argc, char* argv[]) {
     if (argc > 4) {
         samples_per_pixel = atoi(argv[4]);
     }
+
     // the main thing
     cast_rays(samples_per_pixel);
-
+    // cast_one_ray(320, 200);
 
 
     // image test

@@ -19,6 +19,9 @@ raytrace:	raytrace.o image.o util.o
 raytrace_debug:	raytrace_debug.o image.o util.o
 		$(CC) $^ -o $@ $(CFLAGS)
 
+terrain:	terrain.o image.o util.o
+		$(CC) $^ -o $@ $(CFLAGS)
+
 test_intersect:	test_intersect.o util.o
 		$(CC) $(CFLAGS) $^ -o $@ 
 
