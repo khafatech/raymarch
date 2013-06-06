@@ -368,7 +368,7 @@ vec3 cast_ray(Ray &ray, int recursion_depth);
 
 vec3 calcLightingMonteCarlo(GeomObject *obj, vec3 N, vec3 pos) {
 
-    const int sphere_samples = 256;
+    const int sphere_samples = 64;
     const int sphere_samples_sqrt = sqrt(sphere_samples);
 
     float x, y;
@@ -394,10 +394,9 @@ vec3 calcLightingMonteCarlo(GeomObject *obj, vec3 N, vec3 pos) {
         add_epsilon(new_ray);
 
         // attenuate ray
-
         float ray_normal_angle = dot(N, new_ray_dir);
         
-        color += cast_ray(new_ray, 1); // * ray_normal_angle; 
+        color += cast_ray(new_ray, 1); 
     }
 
     vec3 pigment3 = vec3(obj->pigment.color.x,

@@ -409,11 +409,19 @@ float randFloat() {
 // === ray marching ===
 
 float sin_func(float x, float z) {
-    return sin(x) * sin(z);
+    return sin(x) * sin(z) + 0.5 * sin(0.2 * 2 * M_PI * x) + cos(0.1 * 2 * M_PI * z);
 }
 
+#define TWOPI (2 * M_PI)
+
 vec3 func_norm(float x, float z) {
-    return glm::normalize(vec3(-sin(z) * cos(x), 1.0, -sin(x) * cos(z)));
+
+    vec3 normal = vec3(-sin(z) * cos(x), 1.0, -sin(x) * cos(z)) +
+                  vec3(-0.2 *TWOPI * 0.5 * cos(0.2 * TWOPI * x), 1.0, 0) + 
+                  vec3(0, 1.0, 0.1 * TWOPI * sin(0.1 * TWOPI * z))
+                ;
+
+    return glm::normalize(normal);
 }
 
 bool ray_march_intersect(const Ray &ray, float &resT) {
@@ -433,9 +441,13 @@ bool ray_march_intersect(const Ray &ray, float &resT) {
         }
     }
     return false;
-
 }
 
+// get components of Hex color
+#define H2R(c)   (((c) >> 16) & 0xFF)/255.0
+#define H2G(c)   (((c) >> 8) & 0xFF)/255.0
+#define H2B(c)   ((c) & 0xFF)/255.0
+#define H2_3f(c) H2R(c), H2G(c), H2B(c)
 
 
 
@@ -444,12 +456,23 @@ vec3 march_ray(const Ray &ray) {
     float t;
 
     vec3 N;
+
+    vec3 color = vec3(0.0f);
     
 
     if (ray_march_intersect(ray, t)) {
         const vec3 pos = ray.p0 + ray.d * t;
 
         vec3 N = func_norm(pos.x, pos.z);
+
+        if (N.y > 0.99) {
+            // more flat
+            color += vec3(H2_3f(0x185615)); // green
+        } else {
+            color += vec3(H2_3f(0x624703)); // brown
+        }
+
+        g_geom[0]->pigment.color = vec3_to_vec4(color, 0);
         
         return calcLighting_all(g_geom[0], N, pos);
     }
