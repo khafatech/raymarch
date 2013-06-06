@@ -2,7 +2,8 @@
 
 CC = g++
 
-CFLAGS = -Wall -O3 #-pg -g
+CFLAGS = -Wall -O3 -g # -g #-pg
+# -pg for gprof
 
 LDFLAGS = 
 
@@ -33,7 +34,7 @@ test_intersect:	test_intersect.o util.o
 handin:
 		tar -czf ../$(TAR) ../raytrace
 		scp ../$(TAR) unix3:~/Desktop
-		ssh unix3 "handin zwood csc473p4 Desktop/$(TAR)"
+		ssh unix3 "handin zwood csc473p5 Desktop/$(TAR)"
 
 upload:
 		tar -czf ../$(TAR) ../raytrace

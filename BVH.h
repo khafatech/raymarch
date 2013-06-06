@@ -147,14 +147,12 @@ struct BVHNode : GeomObject {
         }
 
         // clean up
-        /*
         if (leftHit && (leftHit != retHit)) {
             delete leftHit;
         }
         if (rightHit && (rightHit != retHit)) {
             delete rightHit;
         }
-        */
 
         return retHit;
     }

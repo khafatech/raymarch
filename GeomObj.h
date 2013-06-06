@@ -171,7 +171,6 @@ public:
     }
 
 
-protected:
 
     vec3 transformv3(vec3 v, mat4 mat) {
         vec3 result;

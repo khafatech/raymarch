@@ -9,6 +9,20 @@ To run: ./raytrace width height scene.pov [rays per pixel]
 This will produce an output file scene.pov.ppm
 
 
+Part 5
+=======
+
+Monte Carlo kind of works.
+
+Images in images_MonteCarlo.
+
+simple_mc.pov has a green horizontal plane, and a white vertical plane.
+
+I turned off ambient.
+
+Bugs:
+There's an artifac on the z axis as in the valentine2_monteCarlo.png.
+
 
 Part 4
 ======

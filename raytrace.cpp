@@ -49,14 +49,15 @@ BVHNode *g_obj_tree;
 Camera *g_camera;
 
 
-void draw_circle(int r) {
+void draw_circle(int x0, int y0, int r) {
     
     for (int y=0; y < g_image_height; y++) {
     	for (int x=0; x < g_image_width; x++) {
     	    
-    	    if ((POWER2(x-g_image_width/2) + POWER2(y-g_image_height/2)) < 
+    	    if ((POWER2(x-x0) + POWER2(y-y0)) < 
     	         POWER2(r)) {
-    	        g_image[x][y] = Color(0, ((y + 10) * 40) % 255, (y * 40) % 255);
+    	        // g_image[x][y] = Color(0, ((y + 10) * 40) % 255, (y * 40) % 255);
+    	        g_image[x][y] = Color(255, 0, 0);
     	    }
     	}
     }
@@ -136,26 +137,40 @@ Hit* find_closest_hit(const Ray &ray) {
 
     Hit *non_plane_hit = g_obj_tree->intersect(ray);
 
-    Hit *plane_hit;
+    Hit *plane_hit = NULL;
 
     Hit *smallest = non_plane_hit;
 
     for (unsigned int i=0; i < g_planes.size(); i++) {
         plane_hit = g_planes[i]->intersect(ray);
 
+        bool used_plane = false;
+
         if (plane_hit && plane_hit->t > 0) {
 
             if (smallest != NULL) {
                 if (plane_hit->t < smallest->t) {
+                    used_plane = true;
                     smallest = plane_hit;
                 }
             } else {
+                used_plane = true;
                 smallest = plane_hit;
             }
 
-        } else if (plane_hit != NULL) {
+        } 
+
+        if (!used_plane) {
             delete plane_hit;
+            plane_hit = NULL;
         }
+
+    }
+
+    if (plane_hit && plane_hit != smallest) {
+        delete plane_hit;
+    } else if (non_plane_hit && non_plane_hit != smallest) {
+        delete non_plane_hit;
     }
 
     return smallest;
@@ -174,6 +189,7 @@ bool blocked_light(vec3 pos, LightSource *light) {
     Hit* hit = find_closest_hit(ray);
     if (hit) {
         if (hit->t > 0.00001 && hit->t < 1.0) {
+            delete hit;
             return true;
         }
     }
@@ -189,7 +205,7 @@ bool blocked_light(vec3 pos, LightSource *light) {
         }
 	} */
 
-
+    delete hit;
 	return false;
 }
 
@@ -266,8 +282,7 @@ vec3 calcLightingPhong(GeomObject *obj, vec3 N, vec3 pos, LightSource *light) {
     Plane *plane;
     if ((plane = dynamic_cast<Plane *>(obj))) {
         pigment3 = plane->getColor(pos);
-    }
-    */
+    }*/
 	
     color = light->color
             * vec3(specular) * vec3(obj->finish.specular)
@@ -283,7 +298,8 @@ vec3 calcLighting_all(GeomObject *obj, vec3 N, vec3 pos) {
     vec3 pigment3 = vec3(obj->pigment.color.x,
             obj->pigment.color.y, obj->pigment.color.z);
 
-    color = obj->finish.ambient * pigment3;
+    // no ambient for monte-carlo
+    // color = obj->finish.ambient * pigment3;
 
     for (int i=0; i < (int) g_lights.size(); i++) {
         // FIXME - enable shadows and fix
@@ -296,10 +312,101 @@ vec3 calcLighting_all(GeomObject *obj, vec3 N, vec3 pos) {
 }
 
 
+// from rorydriscoll.com
+vec3 sampleHemisphere(float u1, float u2) {
+    const float r = sqrt(u1);
+    const float theta = 2 * M_PI * u2;
+
+    const float x = r * cos(theta);
+    const float y = r * sin(theta);
+
+    return vec3(x, y, sqrt(Max(0.0f, 1 - u1)));
+}
+
+// returns in range -1, 1 (not sure if incusive)
+float randFloat() {
+    return ((float) rand() / RAND_MAX);
+}
+
+
+// i, max, => x, y in 0-1
+void strat_sample(const int i, const int max, float &x, float &y, const int w) {
+
+    if (i >= max) {
+        cerr << "durr!";
+        return;
+    }
+    
+    float x_grid, y_grid;
+    
+    x_grid = i % w;
+    y_grid = i / w;
+
+    x = (x_grid + (0.5f+0.5f*randFloat()))/w;
+    y = (y_grid + (0.5f+0.5f*randFloat()))/w;
+}
+
+
+vec3 transformv3_normal(vec3 v, mat4 mat) {
+    vec3 result;
+    vec4 result4;
+
+    vec4 v4 = vec4(v.x, v.y, v.z, 0.0);
+
+    result4 = mat * v4;
+
+    result = vec4_to_vec3(result4);
+
+    return result;
+}
 
 void add_epsilon(Ray &ray) {
     ray.p0 = ray.p0 + ray.d * vec3(0.0001);
 }
+
+vec3 cast_ray(Ray &ray, int recursion_depth);
+
+vec3 calcLightingMonteCarlo(GeomObject *obj, vec3 N, vec3 pos) {
+
+    const int sphere_samples = 256;
+    const int sphere_samples_sqrt = sqrt(sphere_samples);
+
+    float x, y;
+
+    const float sphere_samples_inv = 1.0/sphere_samples;
+    vec3 color = vec3(0.0f);
+
+    for (int i=0; i < sphere_samples; i++) {
+        x = y = 0;
+
+        strat_sample(i, sphere_samples, x, y, sphere_samples_sqrt);
+
+        vec3 new_ray_dir = sampleHemisphere(x, y);
+
+        float rotAngle = dot(N, vec3(0,0,1));
+        vec3 rotAxis = glm::cross(N, vec3(0,0,1));
+        mat4 rotMat = glm::rotate(mat4(1.0), -(float) (rotAngle * 180 / M_PI), rotAxis);
+        new_ray_dir = glm::normalize(transformv3_normal(new_ray_dir, rotMat));
+
+        Ray new_ray;
+        new_ray.d = new_ray_dir;
+        new_ray.p0 = pos;
+        add_epsilon(new_ray);
+
+        // attenuate ray
+
+        float ray_normal_angle = dot(N, new_ray_dir);
+        
+        color += cast_ray(new_ray, 1); // * ray_normal_angle; 
+    }
+
+    vec3 pigment3 = vec3(obj->pigment.color.x,
+            obj->pigment.color.y, obj->pigment.color.z);
+
+    return color * sphere_samples_inv;
+}
+
+
 
 void reflect_ray(Ray &ray, vec3 N, vec3 pos) {
     ray.p0 = pos;
@@ -334,7 +441,7 @@ bool refract_ray(const Ray &ray, const vec3 &pos, const vec3 N, Ray &t, float n_
 }
 
 
-vec3 cast_ray(Ray &ray, int recursion_depth=6) {
+vec3 cast_ray(Ray &ray, int recursion_depth=2) {
     Hit closest_hit(-1, NULL);
 
     Hit *hit;
@@ -394,7 +501,7 @@ vec3 cast_ray(Ray &ray, int recursion_depth=6) {
             float d_dot_n = dot(ray.d, N);
             if (d_dot_n < 0) {
                 // out of obj
-                // debug
+                // debug 
                 // cout << "refract: out of obj\n";
                 refract_ray(ray, pos, N, T, 1/closest_hit.obj->finish.ior);
                 final_color = cast_ray(T, recursion_depth-1) *
@@ -428,8 +535,9 @@ vec3 cast_ray(Ray &ray, int recursion_depth=6) {
         }
 
         final_color += (1.0f - closest_hit.obj->finish.reflection -
-                            closest_hit.obj->pigment.color.w )
-                       * calcLighting_all(closest_hit.obj, N, pos);
+                            closest_hit.obj->pigment.color.w)
+                       * calcLighting_all(closest_hit.obj, N, pos)
+                       + calcLightingMonteCarlo(closest_hit.obj, N, pos);
         
     }
 
@@ -437,15 +545,13 @@ vec3 cast_ray(Ray &ray, int recursion_depth=6) {
 }
 
 
-// returns in range -1, 1 (not sure if incusive)
-float randFloat() {
-    return ((float) rand() / RAND_MAX);
-}
 
 void cast_rays(int samples_per_pixel) {
     Ray *ray;
 
     vec3 color = vec3(0.0);
+
+    const int strat_width = sqrt(samples_per_pixel);
 
     for (int y=0; y < g_image_height; y++) { 
         for (int x=0; x < g_image_width; x++) {
@@ -454,10 +560,12 @@ void cast_rays(int samples_per_pixel) {
             if (samples_per_pixel > 1) {
                 for (int i=0; i < samples_per_pixel; i++) {
 
-                    float dx = 0.5 * randFloat();
-                    float dy = 0.5 * randFloat();
+                    float dx=0; 
+                    float dy=0;
 
-                    ray = g_camera->genRay(x+dx, y+dy);
+                    strat_sample(i, samples_per_pixel, dx, dy, strat_width);
+
+                    ray = g_camera->genRay(x+dx - 0.5, y+dy - 0.5);
 
                     color += cast_ray(*ray);
 
@@ -556,6 +664,32 @@ int main(int argc, char* argv[]) {
     // the main thing
     cast_rays(samples_per_pixel);
     // cast_one_ray(320, 200);
+
+    // test strat
+    /*
+    float x, y;
+    int max = 128; 
+
+    for (int i=0; i < max; i++) {
+        strat_sample(i, max, x, y);
+        cout << "x: "<< x << " y: " << y << endl;
+        draw_circle((int) (g_image_width * x), (int)(g_image_height * y), 3);
+    }
+    */
+
+    // test ray hemisphere
+    /*
+    float x, y;
+    int max = 256; 
+    int smax = sqrt(max); 
+
+    for (int i=0; i < max; i++) {
+        strat_sample(i, max, x, y, smax);
+        vec3 ray = sampleHemisphere(x, y);
+        ray = (ray + 1.0f) / 2.0f;
+        draw_circle((int) (g_image_width * ray.x), (int)(g_image_height * ray.y), 5);
+    }
+    */
 
 
     // image test
