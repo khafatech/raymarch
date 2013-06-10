@@ -432,9 +432,15 @@ bool ray_march_intersect(const Ray &ray, float &resT) {
     const float mint = 0.0f;
     const float maxt = 100.0f;
 
-    for(float t = mint; t < maxt; t += delt) {
+    for (float t = mint; t < maxt; t += delt) {
         const vec3 p = ray.p0 + ray.d*t;
-        if( p.y < sin_func( p.x, p.z ) )
+
+        if (p.y < 1) {
+            resT = t - 0.5f*delt;
+            return true;
+        }
+
+        if (p.y < sin_func( p.x, p.z ) )
         {
             resT = t - 0.5f*delt;
             return true;
@@ -465,7 +471,10 @@ vec3 march_ray(const Ray &ray) {
 
         vec3 N = func_norm(pos.x, pos.z);
 
-        if (N.y > 0.99) {
+        if (pos.y < 1) {
+            color = vec3(0, 0, 1);
+        }
+        else if (N.y > 0.99) {
             // more flat
             color += vec3(H2_3f(0x185615)); // green
         } else {
