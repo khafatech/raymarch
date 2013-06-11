@@ -424,6 +424,8 @@ vec3 func_norm(float x, float z) {
     return glm::normalize(normal);
 }
 
+#define WATER_HIGHT 0
+
 bool ray_march_intersect(const Ray &ray, float &resT) {
 
 
@@ -435,8 +437,8 @@ bool ray_march_intersect(const Ray &ray, float &resT) {
     for (float t = mint; t < maxt; t += delt) {
         const vec3 p = ray.p0 + ray.d*t;
 
-        if (p.y < 1) {
-            resT = t - 0.5f*delt;
+        if (p.y < WATER_HIGHT) {
+            resT = t;
             return true;
         }
 
@@ -471,8 +473,8 @@ vec3 march_ray(const Ray &ray) {
 
         vec3 N = func_norm(pos.x, pos.z);
 
-        if (pos.y < 1) {
-            color = vec3(0, 0, 1);
+        if (pos.y < WATER_HIGHT) {
+            return vec3(0, 0, 1);
         }
         else if (N.y > 0.99) {
             // more flat
@@ -526,6 +528,34 @@ void render(int samples_per_pixel) {
 
     cout << endl;
 }
+
+/* perlin noise
+ * procedural fBm evaluated at point.
+ * from Texturing & Modeling: A procedural approach 3ed. p 437
+ *
+ * H - fractal increment
+ * lacunarity - gap between succ freqs
+ * ocaves - number of freqs in the fractal
+ *
+ */
+
+float fBm(vec3 point, float H, float lacunarity, float octaves) {
+    double value, remainder, Noise();
+    int i;
+
+    value = 0.0;
+    /* inner loop of fractal construction */
+    for (i=0; i<octaves; i++) {
+        value +=    Noise( point ) * pow( lacunarity, -H*i );
+        point *= lacunarity;
+    }
+    remainder = octaves - (int)octaves;
+    if ( remainder ) /* add in “octaves” remainder */
+        /* ‘i’ and spatial freq. are preset in loop above */
+        value += remainder * Noise3( point ) * pow( lacunarity, -H*i );
+    return value;
+}
+
 
 int main(int argc, char* argv[]) {
 
