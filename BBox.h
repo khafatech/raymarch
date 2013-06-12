@@ -82,7 +82,12 @@ public:
         // return intersection point closer to ray origin.
         // return  Max(t0, 0); // get_least_positive(t0, t1);
         // FIXME - doesn't return the real t
-        return 1;
+        // return Max(t0, 0);
+
+        if (t0 > 0) {
+            return t0;
+        }
+        return t1;
     }
 
     float get_least_positive(float t1, float t2) {

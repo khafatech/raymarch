@@ -57,6 +57,9 @@ public:
 
         float t = npd / nd;
 
+        if (t <=0 ) 
+            return 0;
+
         return new Hit(t, this);
     }
 

@@ -47,7 +47,7 @@ BVHNode *g_obj_tree;
 
 
 Camera *g_camera;
-bool use_montecarlo = true;
+bool use_montecarlo = false;
 
 
 
@@ -290,9 +290,9 @@ vec3 calcLightingPhong(GeomObject *obj, vec3 N, vec3 pos, LightSource *light) {
         pigment3 = plane->getColor(pos);
     }*/
 	
-    color = vec3(light->color) * (
-              // vec3(specular) * vec3(obj->finish.specular)
-             vec3(NL) * pigment3); // * obj->finish.diffuse);
+    color = vec3(light->color) *
+           (vec3(specular) * vec3(obj->finish.specular)
+            + vec3(NL) * pigment3 /* * obj->finish.diffuse */);
 
     return color;
 }
@@ -301,20 +301,12 @@ vec3 calcLighting_all(GeomObject *obj, vec3 N, vec3 pos) {
 
     vec3 color = vec3(0.0f);
 
-    vec3 pigment3 = vec3(obj->pigment.color.x,
-            obj->pigment.color.y, obj->pigment.color.z);
-
-    // no ambient for monte-carlo
-    // color = obj->finish.ambient * pigment3;
-
     for (int i=0; i < (int) g_lights.size(); i++) {
-        // FIXME - enable shadows and fix
-
-       // if (!blocked_light(pos, g_lights[i])) {
+        if (!blocked_light(pos, g_lights[i])) {
             color += calcLighting(obj, N, pos, g_lights[i]);
-        // }
+        }
     }
-    
+
     return color;
 }
 
@@ -400,9 +392,6 @@ vec3 calcLightingMonteCarlo(GeomObject *obj, vec3 N, vec3 pos) {
         color += cast_ray(new_ray, 1); 
     }
 
-    vec3 pigment3 = vec3(obj->pigment.color.x,
-            obj->pigment.color.y, obj->pigment.color.z);
-
     return color * sphere_samples_inv;
 }
 
@@ -441,7 +430,7 @@ bool refract_ray(const Ray &ray, const vec3 &pos, const vec3 N, Ray &t, float n_
 }
 
 
-vec3 cast_ray(Ray &ray, int recursion_depth=2) {
+vec3 cast_ray(Ray &ray, int recursion_depth=6) {
     Hit closest_hit(-1, NULL);
 
     Hit *hit;

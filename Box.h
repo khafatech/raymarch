@@ -27,23 +27,39 @@ public:
         string property("");
         skip_to(in, '{');
 
-        read_vec3(in, corner1);
+        read_vec3(in, bbox.min);
 
         skip_to(in, ',');
 
-        read_vec3(in, corner2);
+        read_vec3(in, bbox.max);
 
         GeomObject::read(in);
     }
 
+    Hit* intersect(const Ray &world_ray) {
+        
+        // ray is in object coordinates now
+        Ray ray;
+        world_ray.transform(ray, xmat_i);
+
+        float t = bbox.intersect(ray);
+
+        if (t > 0) {
+            return new Hit(t, this);
+        }
+
+        return NULL;
+    }
+
     void print_properties() {
-        print3f(corner1, "corner1");
-        print3f(corner2, "corner2");
+        print3f(bbox.min, "corner1");
+        print3f(bbox.max, "corner2");
         GeomObject::print_properties();
     }
 
-    vec3 corner1;
-    vec3 corner2;
+
+    BBox bbox;
+
 };
 
 #endif

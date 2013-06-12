@@ -6,6 +6,8 @@ To compile, just run "make -B". Everything is included.
 
 To run: ./raytrace width height scene.pov [rays per pixel]
 
+If no rays per pixel are given, it defaults to 9.
+
 This will produce an output file scene.pov.ppm
 
 
@@ -27,17 +29,24 @@ There's an artifac on the z axis as in the valentine2_monteCarlo.png.
 Part 4
 ======
 
-* Implemented BVH, construction and intersection for spheres only.
-* no intersection for boxes
+* Implemented BVH, construction and intersection
+* no shading for boxes
 * anti-aliasing (9 samples per pixel default.)
 
 Run times for:
 
-800x600 gnarly.pov: 3 seconds   (first light, 6 level recursion, shadows off, AA off)
-640x480 gnarly.pov: 15 seconds   (all lights, 6 level recursion, shadows off, 9xAA)
+640x480 gnarly.pov: 10.3 seconds   (all lights, 6 level recursion)
 
-800x600 balls2.pov: 5 seconds   (first light, 6 level recursion, shadows off, AA off)
-640x480 balls2.pov: 27 seconds (3 lights, 6 level recursion, shadows off, 9xAA)
+640x480 balls2.pov: 8.3 seconds (all lights, 6 level recursion)
+
+640x480 bunny_large_tris.pov: 6.6 seconds (9AA, all lights, 6 level recursion)
+
+* no shadows:
+    800x600 gnarly.pov: 3 seconds   (first light, 6 level recursion, AA off)
+    640x480 gnarly.pov: 15 seconds   (all lights, 6 level recursion, 9xAA)
+
+    800x600 balls2.pov: 5 seconds   (first light, 6 level recursion, AA off)
+    640x480 balls2.pov: 27 seconds (3 lights, 6 level recursion, 9xAA)
 
 
 machine: 64 bit, 2.4GHz core 2 duo
