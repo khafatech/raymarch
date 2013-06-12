@@ -424,7 +424,7 @@ vec3 func_norm(float x, float z) {
     return glm::normalize(normal);
 }
 
-#define WATER_HIGHT 0
+#define WATER_HIGHT -0.5
 
 bool ray_march_intersect(const Ray &ray, float &resT) {
 
@@ -546,7 +546,7 @@ float fBm(vec3 point, float H, float lacunarity, float octaves) {
     value = 0.0;
     /* inner loop of fractal construction */
     for (i=0; i<octaves; i++) {
-        value +=    Noise( point ) * pow( lacunarity, -H*i );
+        value += Noise( point ) * pow( lacunarity, -H*i );
         point *= lacunarity;
     }
     remainder = octaves - (int)octaves;

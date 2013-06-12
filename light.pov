@@ -19,7 +19,7 @@ sphere { <0, 0, 0>, 1
   translate <10, 0, 0>
 }
 
-plane {<0, 1, 0>, 1
+plane {<0, 1, 0>, -0.5
       pigment {color rgb <0.5, 1.5, 0.5>}
       finish {ambient 0.4 diffuse 0.8}
 }

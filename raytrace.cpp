@@ -47,6 +47,8 @@ BVHNode *g_obj_tree;
 
 
 Camera *g_camera;
+bool use_montecarlo = true;
+
 
 
 void draw_circle(int x0, int y0, int r) {
@@ -176,6 +178,9 @@ Hit* find_closest_hit(const Ray &ray) {
     return smallest;
 }
 
+void add_epsilon(Ray &ray) {
+    ray.p0 = ray.p0 + ray.d * vec3(0.0001);
+}
 
 bool blocked_light(vec3 pos, LightSource *light) {
 
@@ -184,11 +189,12 @@ bool blocked_light(vec3 pos, LightSource *light) {
 	ray.d = light->location - pos;
 	ray.p0 = pos;
     
+    add_epsilon(ray);
 
     // BVH
     Hit* hit = find_closest_hit(ray);
     if (hit) {
-        if (hit->t > 0.00001 && hit->t < 1.0) {
+        if (hit->t > 0.0 && hit->t < 1.0) {
             delete hit;
             return true;
         }
@@ -284,9 +290,9 @@ vec3 calcLightingPhong(GeomObject *obj, vec3 N, vec3 pos, LightSource *light) {
         pigment3 = plane->getColor(pos);
     }*/
 	
-    color = light->color
-            * vec3(specular) * vec3(obj->finish.specular)
-            + vec3(NL) * pigment3  ;
+    color = vec3(light->color) * (
+              // vec3(specular) * vec3(obj->finish.specular)
+             vec3(NL) * pigment3); // * obj->finish.diffuse);
 
     return color;
 }
@@ -303,9 +309,10 @@ vec3 calcLighting_all(GeomObject *obj, vec3 N, vec3 pos) {
 
     for (int i=0; i < (int) g_lights.size(); i++) {
         // FIXME - enable shadows and fix
-        //if (!blocked_light(pos, g_lights[i])) {
+
+       // if (!blocked_light(pos, g_lights[i])) {
             color += calcLighting(obj, N, pos, g_lights[i]);
-        //}
+        // }
     }
     
     return color;
@@ -360,15 +367,12 @@ vec3 transformv3_normal(vec3 v, mat4 mat) {
     return result;
 }
 
-void add_epsilon(Ray &ray) {
-    ray.p0 = ray.p0 + ray.d * vec3(0.0001);
-}
 
 vec3 cast_ray(Ray &ray, int recursion_depth);
 
 vec3 calcLightingMonteCarlo(GeomObject *obj, vec3 N, vec3 pos) {
 
-    const int sphere_samples = 64;
+    const int sphere_samples = 256;
     const int sphere_samples_sqrt = sqrt(sphere_samples);
 
     float x, y;
@@ -393,9 +397,6 @@ vec3 calcLightingMonteCarlo(GeomObject *obj, vec3 N, vec3 pos) {
         new_ray.p0 = pos;
         add_epsilon(new_ray);
 
-        // attenuate ray
-        float ray_normal_angle = dot(N, new_ray_dir);
-        
         color += cast_ray(new_ray, 1); 
     }
 
@@ -533,11 +534,19 @@ vec3 cast_ray(Ray &ray, int recursion_depth=2) {
                               * cast_ray(ray, recursion_depth-1);
         }
 
+        vec3 indirect_color;
+        vec3 pigment3 = vec4_to_vec3(closest_hit.obj->pigment.color);
+
+        if (use_montecarlo) {
+            indirect_color = calcLightingMonteCarlo(closest_hit.obj, N, pos);
+        } else {
+            indirect_color = closest_hit.obj->finish.ambient * pigment3;
+        }
+
         final_color += (1.0f - closest_hit.obj->finish.reflection -
                             closest_hit.obj->pigment.color.w)
                        * calcLighting_all(closest_hit.obj, N, pos)
-                       + calcLightingMonteCarlo(closest_hit.obj, N, pos);
-        
+                       + indirect_color;
     }
 
     return final_color;

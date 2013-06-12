@@ -161,7 +161,7 @@ public:
     }
 
     virtual Hit* intersect(const Ray &ray) {
-        cerr << "hurrr\n";
+        // cerr << "hurrr\n";
         return NULL;
     }
 
