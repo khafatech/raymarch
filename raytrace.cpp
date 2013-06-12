@@ -628,12 +628,10 @@ int main(int argc, char* argv[]) {
 
 
     // print objects
-    /*
     for (unsigned int i=0; i<theObjects.size(); i++) {
         cout << endl << endl << theObjects[i]->name << ":\n";
         theObjects[i]->print_properties();
     }
-    */
 
     cout << "w: " << g_image_width << " h: " << g_image_height
          << " fname: " << fname << endl;

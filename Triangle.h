@@ -130,7 +130,10 @@ public:
     }
 
     vec3 getNormal(vec3 pos) {
-        return glm::normalize(glm::cross(c2-c1, c3-c1));
+
+        vec3 norm_obj = glm::cross(c2-c1, c3-c1);
+        
+        return glm::normalize(transformv3_normal(norm_obj, xmatT));
     }
 
     void calcBBox() {
