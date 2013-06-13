@@ -47,7 +47,7 @@ BVHNode *g_obj_tree;
 
 
 Camera *g_camera;
-bool use_montecarlo = false;
+bool use_montecarlo = true;
 
 
 
@@ -341,8 +341,10 @@ void strat_sample(const int i, const int max, float &x, float &y, const int w) {
     x_grid = i % w;
     y_grid = i / w;
 
-    x = (x_grid + (0.5f+0.5f*randFloat()))/w;
-    y = (y_grid + (0.5f+0.5f*randFloat()))/w;
+    float fw = (float) w;
+
+    x = (x_grid + (0.5f+0.5f*randFloat())) / fw;
+    y = (y_grid + (0.5f+0.5f*randFloat())) / fw;
 }
 
 
@@ -377,17 +379,30 @@ vec3 calcLightingMonteCarlo(GeomObject *obj, vec3 N, vec3 pos) {
 
         strat_sample(i, sphere_samples, x, y, sphere_samples_sqrt);
 
-        vec3 new_ray_dir = sampleHemisphere(x, y);
+        // printf("samples: x: %f, y: %f\n", x, y);
 
-        float rotAngle = dot(N, vec3(0,0,1));
-        vec3 rotAxis = glm::cross(N, vec3(0,0,1));
-        mat4 rotMat = glm::rotate(mat4(1.0), -(float) (rotAngle * 180 / M_PI), rotAxis);
-        new_ray_dir = glm::normalize(transformv3_normal(new_ray_dir, rotMat));
+        vec3 new_ray_dir = sampleHemisphere(x, y);
+        // print3f(new_ray_dir, "new_ray_dir");
+
+        float rotAngle = acos(dot(N, vec3(0,0,1)));
+        // print3f(N, "N");
+        // printf("rotangle: %f\n", rotAngle);
+
+        if (rotAngle != 0) {
+            vec3 rotAxis = glm::cross(N, vec3(0,0,1));
+            // print3f(rotAxis, "rotAxis");
+            mat4 rotMat = glm::rotate(mat4(1.0), -(float) (rotAngle * 180 / M_PI), rotAxis);
+            new_ray_dir = glm::normalize(transformv3_normal(new_ray_dir, rotMat));
+        }
 
         Ray new_ray;
         new_ray.d = new_ray_dir;
         new_ray.p0 = pos;
         add_epsilon(new_ray);
+
+        // DEBUG - print secondary ray dir
+        // print3f(new_ray_dir, "new_ray_dir (final)");
+        // cout << endl;
 
         color += cast_ray(new_ray, 1); 
     }
@@ -430,7 +445,7 @@ bool refract_ray(const Ray &ray, const vec3 &pos, const vec3 N, Ray &t, float n_
 }
 
 
-vec3 cast_ray(Ray &ray, int recursion_depth=6) {
+vec3 cast_ray(Ray &ray, int recursion_depth) {
     Hit closest_hit(-1, NULL);
 
     Hit *hit;
@@ -550,6 +565,8 @@ void cast_rays(int samples_per_pixel) {
 
     const int strat_width = sqrt(samples_per_pixel);
 
+    int recur_depth = use_montecarlo ? 2 : 6;
+
     for (int y=0; y < g_image_height; y++) { 
         for (int x=0; x < g_image_width; x++) {
 
@@ -564,13 +581,13 @@ void cast_rays(int samples_per_pixel) {
 
                     ray = g_camera->genRay(x+dx - 0.5, y+dy - 0.5);
 
-                    color += cast_ray(*ray);
+                    color += cast_ray(*ray, recur_depth);
 
                     delete ray;
                 }
             } else {
                 ray = g_camera->genRay(x, y);
-                color = cast_ray(*ray);
+                color = cast_ray(*ray, recur_depth);
                 delete ray;
             }
 
@@ -589,7 +606,7 @@ void cast_one_ray(int x, int y) {
 
     print3f(ray->d, "ray dir");
 
-    vec3 color = cast_ray(*ray);
+    vec3 color = cast_ray(*ray, use_montecarlo? 2 : 6);
 
     print3f(color, "color");
 }
@@ -628,10 +645,12 @@ int main(int argc, char* argv[]) {
 
 
     // print objects
+    /*
     for (unsigned int i=0; i<theObjects.size(); i++) {
         cout << endl << endl << theObjects[i]->name << ":\n";
         theObjects[i]->print_properties();
     }
+    */
 
     cout << "w: " << g_image_width << " h: " << g_image_height
          << " fname: " << fname << endl;
@@ -658,7 +677,9 @@ int main(int argc, char* argv[]) {
 
     // the main thing
     cast_rays(samples_per_pixel);
-    // cast_one_ray(320, 200);
+
+    // debug cast
+    // cast_one_ray(234, 120);
 
     // test strat
     /*
