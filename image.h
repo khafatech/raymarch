@@ -39,6 +39,15 @@ struct Color {
         return *this;
     }
     
+    
+    Color& operator=(const Color &rhs) {
+        r = rhs.r;
+        g = rhs.g;
+        b = rhs.b;
+
+        return *this;
+    }
+    
     uint8_t r;
     uint8_t g;
     uint8_t b;
@@ -51,6 +60,9 @@ typedef Color** Image;
 Image init_image(int w, int h);
 void free_image(int w, int h, Image image);
 void write_image(Image, std::string fname);
+
+Image load_image(const char *filename);
+
 
 
 

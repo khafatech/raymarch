@@ -11,7 +11,6 @@
 #define SMOOTHSTEP(x)  ((x)*(x)*(3 - 2*(x)))
 // #define SMOOTHSTEP(x)  ((x)*(x)*(x) * ((x) * ((x) * 6.0f - 15.0f) + 10.0f))
 
-#define LERP(t,x0,xl) ((x0) + (t)*((xl)-(x0)))
 
 #define RANDMASK 0xfffffff
 #define RANDNBR ((random() & RANDMASK)/(double) RANDMASK)

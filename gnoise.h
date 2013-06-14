@@ -5,6 +5,7 @@
 #include "glm/glm.hpp"
 
 
+#define LERP(t,x0,xl) ((x0) + ((xl)-(x0))*(t))
 
 float gnoise(float x, float y, float z);
 

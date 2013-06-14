@@ -38,8 +38,10 @@ using namespace std;
 // default values
 int g_image_width = 640;
 int g_image_height = 480;
+int g_octaves;
 
 Image g_image;
+Image sky_image;
 
 
 
@@ -422,7 +424,7 @@ float fractal(float x, float z) {
 
 float noise1(float x, float z) {
     // return 10 * gnoise(x/10, z/10, 10);
-    return 10 * fBm(vec3(x/20, z/20, 10), -1, 2.0, 3);
+    return 10 * fBm(vec3(x/40, z/40, 10), -1, 2.0, g_octaves);
 }
 
 vec3 noise1_normal(float x, float z) {
@@ -463,15 +465,79 @@ vec3 func_norm(float x, float z) {
 }
 // ==== end sin function ===
 
-#define WATER_HIGHT -0.5
 
+// get components of Hex color
+#define H2R(c)   (((c) >> 16) & 0xFF)/255.0
+#define H2G(c)   (((c) >> 8) & 0xFF)/255.0
+#define H2B(c)   ((c) & 0xFF)/255.0
+#define H2_3f(c) H2R(c), H2G(c), H2B(c)
+
+
+vec3 lerp(float t, vec3 v0, vec3 v1) {
+    return v0 + (v1 - v0) * t;
+}
+
+vec3 terrainColor(const Ray &ray, float t) {
+    const vec3 pos = ray.p0 + ray.d * t;
+    vec3 N = noise1_normal(pos.x, pos.z);
+
+    vec3 brown(140/255.0f, 92/255.0f, 3/255.0f);
+    vec3 grey(135/255.0f);
+
+    /*
+    if (pos.y < WATER_HIGHT) {
+        return vec3(0, 0, 1);
+    }
+    */
+
+    vec3 color = lerp(0.5 + pos.y/20, brown, grey);
+
+    // printf("y: %f\n", N.y);
+    // print3f(color, "lerped color");
+
+    if (N.y > 0.9 ) {
+        // more flat
+        if (pos.y < 0) 
+            color = vec3(H2_3f(0x185615)); // green
+        else 
+            color = vec3(H2_3f(0xF1F1FF)); // snow
+    }
+
+    g_geom[0]->pigment.color = vec3_to_vec4(color, 0);
+
+    // vec3 fog = lerp(t/100.0f, vec3(0.0f), vec3(0.5, 0.5, 0.5));
+    
+    return calcLighting_all(g_geom[0], N, pos);
+}
+
+
+vec3 sky_color(int x, int y) {
+
+    int x1, y1;
+
+    float W = 1022 - 400;
+
+    x1 = (int) ( (((float) x)/g_image_width) * W + 400);
+    y1 = (int) (400-400 * (((float) y)/g_image_height));
+
+    return vec3(sky_image[x1][y1].r/255.0f,
+                sky_image[x1][y1].g/255.0f,
+                sky_image[x1][y1].b/255.0f);
+}
+
+
+
+#define WATER_HIGHT -0.5
 bool ray_march_intersect(const Ray &ray, float &resT) {
 
 
     // from iquilezles.org terrain marching article 
-    const float delt = 0.5f;
+    float delt = 0.1f;
     const float mint = 0.001f;
     const float maxt = 100.0f;
+
+    float lh = 0.0f;
+    float ly = 0.0f;
 
     for (float t = mint; t < maxt; t += delt) {
         const vec3 p = ray.p0 + ray.d*t;
@@ -483,57 +549,32 @@ bool ray_march_intersect(const Ray &ray, float &resT) {
         }
         */
 
-        if (p.y < noise1( p.x, p.z ) )
+        float h = noise1( p.x, p.z );
+
+        if (p.y < h)
         {
             // printf("x: %f, z: %f\n", p.x, p.z);
-            resT = t - 0.5f*delt;
+            resT = t - delt + delt *(lh-ly)/(p.y-ly-h+lh);
             return true;
         }
+        delt = 0.1f * t;
+
+        lh = h;
+        ly = p.y;
     }
     return false;
 }
 
-// get components of Hex color
-#define H2R(c)   (((c) >> 16) & 0xFF)/255.0
-#define H2G(c)   (((c) >> 8) & 0xFF)/255.0
-#define H2B(c)   ((c) & 0xFF)/255.0
-#define H2_3f(c) H2R(c), H2G(c), H2B(c)
 
-
-vec3 terrainColor(const Ray &ray, float t) {
-    const vec3 pos = ray.p0 + ray.d * t;
-    vec3 color = vec3(0.0f);
-    vec3 N = noise1_normal(pos.x, pos.z);
-
-    /*
-    if (pos.y < WATER_HIGHT) {
-        return vec3(0, 0, 1);
-    }
-    */
-
-    if (N.y > 0.99) {
-        // more flat
-        color += vec3(H2_3f(0x185615)); // green
-    } else {
-        color += vec3(H2_3f(0x624703)); // brown
-    }
-
-    g_geom[0]->pigment.color = vec3_to_vec4(color, 0);
-    
-    return calcLighting_all(g_geom[0], N, pos);
-}
-
-
-
-vec3 march_ray(const Ray &ray) {
+vec3 march_ray(const Ray &ray, int x, int y) {
 
     float t;
 
     if (ray_march_intersect(ray, t)) {
         return terrainColor(ray, t);
+    } else {
+        return sky_color(x, y);
     }
-
-    return vec3(0.0f);
 }
 
 
@@ -554,13 +595,13 @@ void render(int samples_per_pixel) {
 
                     ray = g_camera->genRay(x+dx, y+dy);
 
-                    color += march_ray(*ray);
+                    color += march_ray(*ray, x, y);
 
                     delete ray;
                 }
             } else {
                 ray = g_camera->genRay(x, y);
-                color = march_ray(*ray);
+                color = march_ray(*ray, x, y);
                 delete ray;
             }
 
@@ -629,7 +670,7 @@ int main(int argc, char* argv[]) {
 
     if (argc < 4) {
         cerr << "usage: " << argv[0] <<
-            " width height input.pov [samples per pixel]\n";
+            " width height light.pov [number of octaves. default is 5]\n";
         exit(1);
     }
 
@@ -661,21 +702,31 @@ int main(int argc, char* argv[]) {
 
     g_image = init_image(g_image_width, g_image_height);
 
+    sky_image = load_image("clouds_flickr_cubagallery.bmp");
+
     g_camera->setImageDimention(g_image_width, g_image_height);
 
     // g_obj_tree = new BVHNode(g_geom);
     // g_obj_tree->print();
 
     // Anti aliasing
-    int samples_per_pixel = 9; // Zoe wants 9
+    int samples_per_pixel = 5; // Zoe wants 9
 
     if (argc > 4) {
         samples_per_pixel = atoi(argv[4]);
     }
+
+    g_octaves = samples_per_pixel;
+
     // the main thing
-    render(samples_per_pixel);
+    render(1);
  
     // draw_gradient_noise();
+
+
+
+    // TODO - has a bug
+    // write_image(sky_image, "sky.ppm");
 
 
     // image test
