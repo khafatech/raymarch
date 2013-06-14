@@ -47,7 +47,7 @@ BVHNode *g_obj_tree;
 
 
 Camera *g_camera;
-bool use_montecarlo = true;
+bool use_montecarlo = false;
 
 
 

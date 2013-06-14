@@ -1,4 +1,7 @@
 
+Mustafa Khafateh
+
+CSC 473 - Ray Tracer project
 
 
 
@@ -10,6 +13,51 @@ If no rays per pixel are given, it defaults to 9.
 
 This will produce an output file scene.pov.ppm
 
+To toggle Monte-Carlo rendering, toggle the use_montecarlo boolean in raytrace.cpp and recompile.
+
+
+Ray tracer updates 6/12/2013
+=============================
+
+Updated render of POV files:
+
+- final1.pov, final2.pov, gnarly.pov, balls2.pov, recuse_simp2.pov (after changing "}}" to "} }")
+	* Renders are in the images/ directory
+
+- Fixed Global Illumination. looks good as expected. see images/final2_4xAA-14mins.png and images/interesting_montecarlo2.png
+
+
+- Enabled shadows with BVH. I originally implemented shadows for P2 but disabled them when implementing the BVH and forgot to re enable them)
+
+
+- Added shading and transforms for Boxes.
+	(I had intersection working for bounding boxes,
+	and wanted to use it for geometrical Boxes,
+	but there was a subtle bug when a ray was inside the box, so it broke the BVH.)
+	* I had all the transform functions in place (used for bounding xformed sphere)
+	* the middle sphere in final1.pov has no specified specular and roughness.
+
+- Improved how specular looks. Now bunny_large_tris.pov looks better.
+
+
+
+- for recuse_simp2.pov, it renders correctly, but my pov parseer gets messed up by the "}}" at the end of the back wall planes. So I changed them to "} }". I took programming languages this quarter, so now I see how I could write a better parser.
+
+
+Run times for (Without Monte Carlo, of course)
+
+640x480 gnarly.pov: 10.3 seconds   (all lights, 6 level recursion)
+
+640x480 balls2.pov: 8.3 seconds (all lights, 6 level recursion)
+
+640x480 bunny_large_tris.pov: 6.6 seconds (9AA, all lights, 6 level recursion)
+
+
+
+
+=========
+Old notes
+=========
 
 Part 5
 =======
@@ -30,7 +78,6 @@ Part 4
 ======
 
 * Implemented BVH, construction and intersection
-* no shading for boxes
 * anti-aliasing (9 samples per pixel default.)
 
 Run times for:

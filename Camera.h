@@ -59,6 +59,8 @@ public:
 
         vec3 u;
         vec3 w = normalize(look_at - location);
+
+        vec3 real_up = normalize(glm::cross(right, w));
         
         // pixel to cam coords
         u.x = -r + 2 * r * (x + 0.5) / image_w;
@@ -67,7 +69,7 @@ public:
         
         // cam to world coords
         ray->p0 = location + vec3(u.x) * normalize(right)
-                  + vec3(u.y) * up
+                  + vec3(u.y) * real_up 
                   + vec3(u.z) * w;
 
         ray->d = ray->p0 - location;

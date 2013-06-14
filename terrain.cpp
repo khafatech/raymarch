@@ -33,6 +33,8 @@ using namespace std;
 #include "Ray.h"
 #include "BVH.h"
 
+#include "gnoise.h"
+
 // default values
 int g_image_width = 640;
 int g_image_height = 480;
@@ -406,23 +408,60 @@ float randFloat() {
 
 
 
-// === ray marching ===
 
+
+
+// === ray marching functions ===
+
+float fBm(vec3 point, float H, float lacunarity, float octaves);
+
+float fractal(float x, float z) {
+    return fBm(vec3(x/50, z/50, 0.5), -1, 2.0, 3);
+}
+
+
+float noise1(float x, float z) {
+    // return 10 * gnoise(x/10, z/10, 10);
+    return 10 * fBm(vec3(x/20, z/20, 10), -1, 2.0, 3);
+}
+
+vec3 noise1_normal(float x, float z) {
+
+    const float eps = 0.0001;
+
+    // central difference method. from iquilezles.org
+    return normalize(vec3(noise1(x-eps, z) - noise1(x+eps, z),
+                          2.0f*eps,
+                          noise1(x, z-eps) - noise1(x, z+eps) ));
+
+    /*
+    // uses derivatives
+    TODO - doesn't work
+    vec3 N;
+    normal_gnoise(N, x/10, z/10, 0.5);
+    return normalize(vec3(-N.x, -N.y, -1));
+    */
+}
+
+
+
+// ==== sin function ===
 float sin_func(float x, float z) {
-    return sin(x) * sin(z) + 0.5 * sin(0.2 * 2 * M_PI * x) + cos(0.1 * 2 * M_PI * z);
+    return // sin(x) * sin(z) +
+        0.5 * sin(0.2 * 2 * M_PI * x) +
+        cos(0.1 * 2 * M_PI * z);
 }
 
 #define TWOPI (2 * M_PI)
-
 vec3 func_norm(float x, float z) {
-
-    vec3 normal = vec3(-sin(z) * cos(x), 1.0, -sin(x) * cos(z)) +
+    vec3 normal = // vec3(-sin(z) * cos(x), 1.0, -sin(x) * cos(z)) +
                   vec3(-0.2 *TWOPI * 0.5 * cos(0.2 * TWOPI * x), 1.0, 0) + 
                   vec3(0, 1.0, 0.1 * TWOPI * sin(0.1 * TWOPI * z))
                 ;
 
     return glm::normalize(normal);
 }
+// ==== end sin function ===
 
 #define WATER_HIGHT -0.5
 
@@ -430,20 +469,23 @@ bool ray_march_intersect(const Ray &ray, float &resT) {
 
 
     // from iquilezles.org terrain marching article 
-    const float delt = 0.1f;
-    const float mint = 0.0f;
+    const float delt = 0.5f;
+    const float mint = 0.001f;
     const float maxt = 100.0f;
 
     for (float t = mint; t < maxt; t += delt) {
         const vec3 p = ray.p0 + ray.d*t;
 
+        /*
         if (p.y < WATER_HIGHT) {
             resT = t;
             return true;
         }
+        */
 
-        if (p.y < sin_func( p.x, p.z ) )
+        if (p.y < noise1( p.x, p.z ) )
         {
+            // printf("x: %f, z: %f\n", p.x, p.z);
             resT = t - 0.5f*delt;
             return true;
         }
@@ -458,34 +500,37 @@ bool ray_march_intersect(const Ray &ray, float &resT) {
 #define H2_3f(c) H2R(c), H2G(c), H2B(c)
 
 
+vec3 terrainColor(const Ray &ray, float t) {
+    const vec3 pos = ray.p0 + ray.d * t;
+    vec3 color = vec3(0.0f);
+    vec3 N = noise1_normal(pos.x, pos.z);
+
+    /*
+    if (pos.y < WATER_HIGHT) {
+        return vec3(0, 0, 1);
+    }
+    */
+
+    if (N.y > 0.99) {
+        // more flat
+        color += vec3(H2_3f(0x185615)); // green
+    } else {
+        color += vec3(H2_3f(0x624703)); // brown
+    }
+
+    g_geom[0]->pigment.color = vec3_to_vec4(color, 0);
+    
+    return calcLighting_all(g_geom[0], N, pos);
+}
+
+
 
 vec3 march_ray(const Ray &ray) {
 
     float t;
 
-    vec3 N;
-
-    vec3 color = vec3(0.0f);
-    
-
     if (ray_march_intersect(ray, t)) {
-        const vec3 pos = ray.p0 + ray.d * t;
-
-        vec3 N = func_norm(pos.x, pos.z);
-
-        if (pos.y < WATER_HIGHT) {
-            return vec3(0, 0, 1);
-        }
-        else if (N.y > 0.99) {
-            // more flat
-            color += vec3(H2_3f(0x185615)); // green
-        } else {
-            color += vec3(H2_3f(0x624703)); // brown
-        }
-
-        g_geom[0]->pigment.color = vec3_to_vec4(color, 0);
-        
-        return calcLighting_all(g_geom[0], N, pos);
+        return terrainColor(ray, t);
     }
 
     return vec3(0.0f);
@@ -529,7 +574,7 @@ void render(int samples_per_pixel) {
     cout << endl;
 }
 
-/* perlin noise
+/* 
  * procedural fBm evaluated at point.
  * from Texturing & Modeling: A procedural approach 3ed. p 437
  *
@@ -540,20 +585,43 @@ void render(int samples_per_pixel) {
  */
 
 float fBm(vec3 point, float H, float lacunarity, float octaves) {
-    double value, remainder, Noise();
+
+    double value, remainder;
     int i;
 
     value = 0.0;
     /* inner loop of fractal construction */
+    float exponent = 2;
+
     for (i=0; i<octaves; i++) {
-        value += Noise( point ) * pow( lacunarity, -H*i );
+        value += gnoise( point ) * exponent; // pow( lacunarity, -H*i );
         point *= lacunarity;
+
+        exponent *= 0.5;
     }
     remainder = octaves - (int)octaves;
     if ( remainder ) /* add in “octaves” remainder */
         /* ‘i’ and spatial freq. are preset in loop above */
-        value += remainder * Noise3( point ) * pow( lacunarity, -H*i );
+        value += remainder * gnoise( point ) * pow( lacunarity, -H*i );
     return value;
+}
+
+void  draw_gradient_noise() {
+
+    for (int y=0; y < g_image_height; y++)
+    for (int x=0; x < g_image_width; x++) {
+        g_image[x][y] = vec3(0.5 + 0.5 * gnoise(30 + ((float) x)/5,
+                               ((float) y)/5 - 10,
+                                10));
+
+        /*
+        float scale = 50;
+        float val = fBm(vec3(((float) x)/scale,((float) y)/scale, 10),
+                    0.5, 2.0f, 4);
+        g_image[x][y] = vec3(0.5 + 0.5 * val);
+        */
+    }
+
 }
 
 
@@ -606,7 +674,8 @@ int main(int argc, char* argv[]) {
     }
     // the main thing
     render(samples_per_pixel);
-
+ 
+    // draw_gradient_noise();
 
 
     // image test
